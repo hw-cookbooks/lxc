@@ -1,4 +1,7 @@
-package 'lxc'
+# install the server dependencies to run lxc
+node[:lxc][:packages].each do |lxcpkg|
+  package lxcpkg
+end
 
 include_recipe 'lxc::install_dependencies'
 
@@ -18,8 +21,10 @@ template '/etc/default/lxc' do
       :lxc_shutdown_timeout => node[:lxc][:shutdown_timeout]
     }
   )
-  # notify?
 end
 
-node.set[:omnibus_updater][:cache_omnibus_installer] = true
-include_recipe 'omnibus_updater::deb_downloader'
+#this just reloads the dnsmasq rules when
+service "lxc-net" do
+  action :enable
+  subscribes :restart, resources("template[/etc/default/lxc]")
+end

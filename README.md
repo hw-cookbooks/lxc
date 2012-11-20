@@ -2,6 +2,20 @@
 
 Manage linux containers with Chef.
 
+### Recipes
+
+#### default
+
+Installs the packages and configuration files needed for lxc on the server.
+
+#### install_dependencies
+
+Installs the packages needed to support lxc's containers.
+
+#### knife
+
+Install and manage the knife-lxc plugin.
+
 ### Example
 
 ```ruby
@@ -27,10 +41,18 @@ lxc_service 'my_container_clone' do
 end
 ```
 
-Containers do not have to be chef enabled but it does make them
-extremely easy to configure. The lxc_container resource also provides
-`initialize_commands` which an array of commands can be provided
-that will be run after the container is created.
+Containers do not have to be Chef enabled but it does make them
+extremely easy to configure. If you want the Omnibus installer
+cached, you can set the attribute
+
+```ruby
+node['omnibus_updater']['cache_omnibus_installer'] = true
+```
+
+in a role or environment (default is false). The `lxc_container`
+resource also provides `initialize_commands` which an array of
+commands can be provided that will be run after the container is
+created.
 
 ### Repository:
 
@@ -39,3 +61,4 @@ that will be run after the container is created.
 ### Contributors
 
 * Sean Porter (https://github.com/portertech)
+* Matt Ray (https://github.com/mattray)
