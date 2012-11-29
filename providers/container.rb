@@ -230,7 +230,7 @@ action :create do
     if(new_resource.new_container && !new_resource.initialize_commands.empty?)
       ruby_block "lxc initialize_commands[#{new_resource.name}]" do
         block do
-          new_resource.container_commands.each do |cmd|
+          new_resource.initialize_commands.each do |cmd|
             new_resource._lxc.container_command(cmd, 2)
           end
         end
