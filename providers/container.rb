@@ -1,9 +1,9 @@
 def load_current_resource
   new_resource._lxc Lxc.new(
-    new_resource.name,
-    :base_dir => node[:lxc][:container_directory],
-    :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
-  )
+                            new_resource.name,
+                            :base_dir => node[:lxc][:container_directory],
+                            :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
+                            )
   # TODO: Use some actual logic here, sheesh
   if(new_resource.static_ip && new_resource.static_gateway.nil?)
     new_resource.static_gateway new_resource.static_ip.sub(/\d+$/, '1')
@@ -74,15 +74,15 @@ action :create do
     ruby_block "force container gateway[#{new_resource.name}]" do
       block do
         file = Chef::Util::FileEdit.new(
-          ::File.join(
-            new_resource._lxc.rootfs, 'etc', 'rc.local'
-          )
-        )
+                                        ::File.join(
+                                                    new_resource._lxc.rootfs, 'etc', 'rc.local'
+                                                    )
+                                        )
         file.search_file_delete_line(%r{route add default gw})
         file.search_file_replace(
-          %r{exit 0$},
-          "route add default gw #{new_resource.static_gateway}\nexit 0"
-        )
+                                 %r{exit 0$},
+                                 "route add default gw #{new_resource.static_gateway}\nexit 0"
+                                 )
         file.write_file
       end
       not_if "grep \"route add default gw #{new_resource.static_gateway}\" #{::File.join(new_resource._lxc.rootfs, 'etc', 'rc.local')}"
@@ -101,7 +101,7 @@ action :create do
 
       #### Use cached chef package from host if available
       if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>1 > /dev/null'))
-        file_name = Dir.new('/opt').detect do |item| 
+        file_name = Dir.new('/opt').detect do |item|
           item.start_with?('chef') && item.end_with?('.deb')
         end
         if(file_name)
@@ -109,8 +109,8 @@ action :create do
             command "cp /opt/#{file_name} #{::File.join(new_resource._lxc.rootfs, 'opt')}"
             not_if do
               ::File.exists?(
-                ::File.join(new_resource._lxc.rootfs, 'opt', file_name)
-              )
+                             ::File.join(new_resource._lxc.rootfs, 'opt', file_name)
+                             )
             end
           end
 
@@ -136,10 +136,10 @@ action :create do
         cookbook 'lxc'
         path ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'client.rb')
         variables(
-          :validation_client => new_resource.validation_client,
-          :node_name => new_resource.node_name || "#{node.name}-#{new_resource.name}",
-          :server_uri => new_resource.server_uri
-        )
+                  :validation_client => new_resource.validation_client,
+                  :node_name => new_resource.node_name || "#{node.name}-#{new_resource.name}",
+                  :server_uri => new_resource.server_uri
+                  )
         mode 0644
       end
 
@@ -154,8 +154,8 @@ action :create do
         content({:run_list => new_resource.run_list}.to_json)
         not_if do
           ::File.exists?(
-            ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'client.pem')
-          )
+                         ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'client.pem')
+                         )
         end
         mode 0644
       end
@@ -181,8 +181,8 @@ action :create do
       end
       only_if do
         ::File.exists?(
-          ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'first_run.json')
-        )
+                       ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'first_run.json')
+                       )
       end
     end
 
@@ -198,12 +198,13 @@ action :create do
 
         ruby_block "lxc install_chef[#{new_resource.name}]" do
           block do
-            new_resource._lxc.container_command(
-              "bash /opt/chef-install.sh"
-            )
+            # we need curl by here
+            new_resource._lxc.container_command( "bash /opt/chef-install.sh" )
           end
           not_if do
-            File.exists?(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
+            ::File.exists?(
+                           ::File.join(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
+                           )
           end
         end
       end
@@ -212,14 +213,14 @@ action :create do
       ruby_block "lxc run_chef[#{new_resource.name}]" do
         block do
           new_resource._lxc.container_command(
-            "chef-client -K /etc/chef/validator.pem -c /etc/chef/client.rb -j /etc/chef/first_run.json",
-            new_resource.chef_retries
-          )
+                                              "chef-client -K /etc/chef/validator.pem -c /etc/chef/client.rb -j /etc/chef/first_run.json",
+                                              new_resource.chef_retries
+                                              )
         end
         not_if do
           ::File.exists?(
-            ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'client.pem')
-          )
+                         ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'client.pem')
+                         )
         end
       end
     end
@@ -261,7 +262,7 @@ action :create do
       file ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'first_run.json') do
         action :delete
       end
-      
+
       file ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'validator.pem') do
         action :delete
       end
@@ -279,7 +280,7 @@ action :delete do
       new_resource._lxc.running?
     end
   end
-  
+
   execute "lxc delete[#{new_resource.name}]" do
     command "lxc-destroy -n #{new_resource.name}"
     only_if do
@@ -303,13 +304,13 @@ action :clone do
       new_resource._lxc.running?
     end
   end
-  
+
   lxc_config new_resource.name do
     config new_resource.config
     action :create
     notifies :restart, resources(:lxc_service => "lxc config_restart[#{new_resource.name}]"), :immediately
   end
-  
+
   if(new_resource.chef_enabled)
     ruby_block "lxc start[#{new_resource.name}]" do
       block do
@@ -322,13 +323,13 @@ action :clone do
     ruby_block "lxc run_chef[#{new_resource.name}]" do
       block do
         new_resource._lxc.container_command(
-          "chef-client -K /etc/chef/validator.pem -c /etc/chef/client.rb -j /etc/chef/first_run.json", 3
-        )
+                                            "chef-client -K /etc/chef/validator.pem -c /etc/chef/client.rb -j /etc/chef/first_run.json", 3
+                                            )
       end
       action :nothing
       subscribes :create, resources(:execute => "lxc clone[#{new_resource.base_container} -> #{new_resource.name}]"), :immediately
     end
- 
+
     ruby_block "lxc shutdown[#{new_resource.name}]" do
       block do
         new_resource._lxc.shutdown
