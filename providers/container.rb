@@ -198,7 +198,6 @@ action :create do
 
         ruby_block "lxc install_chef[#{new_resource.name}]" do
           block do
-            # we need curl by here
             new_resource._lxc.container_command( "bash /opt/chef-install.sh" )
           end
           not_if do
