@@ -6,15 +6,34 @@ Manage linux containers with Chef.
 
 #### default
 
-Installs the packages and configuration files needed for lxc on the server.
+Installs the packages and configuration files needed for lxc on the server. If
+the node uses apt-cacher-ng as a client, the server will be reused when building
+containers.
 
 #### install_dependencies
 
 Installs the packages needed to support lxc's containers.
 
+#### containers
+
+This recipe creates all of the containers defined in the `['lxc']['containers']`
+hash. Here is an example of an `example` container:
+
+```ruby
+node['lxc']['containers']['example'] = { 
+  'template' => 'ubuntu',
+  'trim' => , false,
+  'debug' => , true 
+}
+```
+
+You may set `trim` and `debug` to `true` if you need them (default is `false`).
+
+Backing store file system and template options are not yet supported.
+
 #### knife
 
-Install and manage the knife-lxc plugin.
+Install and manage containers via the knife-remotelxc plugin.
 
 ### Example
 
