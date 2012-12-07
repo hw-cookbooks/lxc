@@ -5,6 +5,7 @@ attribute :base_container, :kind_of => String
 attribute :validation_client, :kind_of => String
 attribute :validator_pem, :kind_of => String, :default => nil
 attribute :server_uri, :kind_of => String
+attribute :chef_environment, :kind_of => String, :default => '_default'
 attribute :node_name, :kind_of => String
 attribute :run_list, :kind_of => Array
 attribute :chef_enabled, :kind_of => [TrueClass, FalseClass], :default => false

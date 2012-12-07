@@ -138,7 +138,8 @@ action :create do
         variables(
           :validation_client => new_resource.validation_client,
           :node_name => new_resource.node_name || "#{node.name}-#{new_resource.name}",
-          :server_uri => new_resource.server_uri
+          :server_uri => new_resource.server_uri,
+          :chef_environment => new_resource.chef_environment || '_default'
         )
         mode 0644
       end
