@@ -46,6 +46,7 @@ action :create do
   end
 
   net_set = Mash.new(:device => new_resource.device)
+  net_set[:auto] = new_resource.auto
   if(new_resource.dynamic)
     net_set[:dynamic] = true
   else
