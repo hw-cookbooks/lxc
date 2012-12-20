@@ -1,9 +1,9 @@
 def load_current_resource
   @lxc = Lxc.new(
-    new_resource.container,
-    :base_dir => node[:lxc][:container_directory],
-    :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
-  )
+                 new_resource.container,
+                 :base_dir => node[:lxc][:container_directory],
+                 :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
+                 )
   @loaded ||= {}
   # value checks
   unless(new_resource.dynamic)
@@ -22,8 +22,8 @@ def load_current_resource
       raise 'netmask is not valid' if oct.to_i > 255
     end
   end
-  node.set[:lxc][:interfaces] ||= Mash.new
-  node.set[:lxc][:interfaces][new_resource.container] ||= []
+  node[:lxc][:interfaces] ||= Mash.new
+  node[:lxc][:interfaces][new_resource.container] ||= []
 end
 
 action :create do
@@ -46,6 +46,7 @@ action :create do
   end
 
   net_set = Mash.new(:device => new_resource.device)
+
   net_set[:auto] = new_resource.auto
   if(new_resource.dynamic)
     net_set[:dynamic] = true
@@ -56,7 +57,7 @@ action :create do
   end
 
   unless(node[:lxc][:interfaces][new_resource.container].include?(net_set))
-    node[:lxc][:interfaces][new_resource.container] << net_set
+    node.set[:lxc][:interfaces][new_resource.container] << net_set
     new_resource.updated_by_last_action(true)
   end
 end
