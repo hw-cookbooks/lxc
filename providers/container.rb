@@ -101,7 +101,7 @@ action :create do
 
       #### Use cached chef package from host if available
       if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>1 > /dev/null'))
-        file_name = Dir.new('/opt').detect do |item| 
+        file_name = Dir.new('/opt').detect do |item|
           item.start_with?('chef') && item.end_with?('.deb')
         end
         if(file_name)
@@ -203,7 +203,9 @@ action :create do
             )
           end
           not_if do
-            File.exists?(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
+            ::File.exists?(
+              ::File.join(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
+            )
           end
         end
       end
@@ -261,7 +263,7 @@ action :create do
       file ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'first_run.json') do
         action :delete
       end
-      
+
       file ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'validator.pem') do
         action :delete
       end
@@ -279,7 +281,7 @@ action :delete do
       new_resource._lxc.running?
     end
   end
-  
+
   execute "lxc delete[#{new_resource.name}]" do
     command "lxc-destroy -n #{new_resource.name}"
     only_if do
@@ -303,13 +305,13 @@ action :clone do
       new_resource._lxc.running?
     end
   end
-  
+
   lxc_config new_resource.name do
     config new_resource.config
     action :create
     notifies :restart, resources(:lxc_service => "lxc config_restart[#{new_resource.name}]"), :immediately
   end
-  
+
   if(new_resource.chef_enabled)
     ruby_block "lxc start[#{new_resource.name}]" do
       block do
@@ -328,7 +330,7 @@ action :clone do
       action :nothing
       subscribes :create, resources(:execute => "lxc clone[#{new_resource.base_container} -> #{new_resource.name}]"), :immediately
     end
- 
+
     ruby_block "lxc shutdown[#{new_resource.name}]" do
       block do
         new_resource._lxc.shutdown
