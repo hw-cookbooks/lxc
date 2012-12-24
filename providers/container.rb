@@ -203,7 +203,7 @@ action :create do
             )
           end
           not_if do
-            File.exists?(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
+            ::File.exists?(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
           end
         end
       end

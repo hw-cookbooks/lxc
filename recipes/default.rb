@@ -8,7 +8,7 @@ include_recipe 'lxc::install_dependencies'
 #if the server uses the apt::cacher-client recipe, re-use it
 mirror="http://archive.ubuntu.com/ubuntu"
 unless Chef::Config[:solo]
-  if File.exists?('/etc/apt/apt.conf.d/01proxy')
+  if ::File.exists?('/etc/apt/apt.conf.d/01proxy')
     query = 'recipes:apt\:\:cacher-ng'
     query += " AND chef_environment:#{node.chef_environment}" if node['apt']['cacher-client']['restrict_environment']
     Chef::Log.debug("apt::cacher-client searching for '#{query}'")
