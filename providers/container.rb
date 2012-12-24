@@ -29,7 +29,7 @@ action :create do
 
   #### Create container
   execute "lxc create[#{new_resource.name}]" do
-    command "lxc-create -n #{new_resource.name} -t #{new_resource.template}"
+    command "lxc-create -n #{new_resource.name} -t #{new_resource.template} -- #{new_resource.template_opts.to_a.flatten.join(' ')}"
     only_if do
       !new_resource._lxc.exists? && new_resource.updated_by_last_action(true)
     end
@@ -203,7 +203,9 @@ action :create do
             )
           end
           not_if do
-            File.exists?(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
+            ::File.exists?(
+              ::File.join(new_resource._lxc.rootfs, 'usr', 'bin', 'chef-client')
+            )
           end
         end
       end

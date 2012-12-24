@@ -126,8 +126,9 @@ def create_lxc(lxc_name, template)
 end
 
 def lxc_address(name)
-  if(File.exists?(int = File.join(LXC_HOME, name, 'rootfs', 'etc', 'network', 'interfaces')))
-    addr = File.readlines(int).detect{|l|l.include?('address')}.to_s.split(' ').last.to_s.strip
+  interfaces = File.join(LXC_HOME, name, 'rootfs', 'etc', 'network', 'interfaces')
+  if(File.exists?(interfaces))
+    addr = File.readlines(interfaces).detect{|l|l.include?('address')}.to_s.split(' ').last.to_s.strip
     addr.empty? ? 'dynamic' : addr
   else
     'dynamic'
