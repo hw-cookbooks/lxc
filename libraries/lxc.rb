@@ -179,8 +179,12 @@ class Lxc
 
   # Shutdown the container
   def shutdown
-    run_command("lxc-shutdown -n #{name}")
-    run_command("lxc-wait -n #{name} -s STOPPED", :allow_failure_retry => 2)
+    begin
+      run_command("lxc-shutdown -n #{name}")
+      run_command("lxc-wait -n #{name} -s STOPPED", :allow_failure_retry => 2)
+    rescue Mixlib::ShellOut::CommandTimeout => e
+      self.stop
+    end
   end
 
   def knife_container(cmd, ip)
