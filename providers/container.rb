@@ -196,8 +196,12 @@ action :create do
           action :create_if_missing
         end
 
+        # install script requires either curl or wget
         ruby_block "lxc install_chef[#{new_resource.name}]" do
           block do
+            new_resource._lxc.container_command(
+              "apt-get install -y curl"
+            )
             new_resource._lxc.container_command(
               "bash /opt/chef-install.sh"
             )
