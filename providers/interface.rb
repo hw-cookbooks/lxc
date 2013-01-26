@@ -22,8 +22,9 @@ def load_current_resource
       raise 'netmask is not valid' if oct.to_i > 255
     end
   end
-  node[:lxc][:interfaces] ||= Mash.new
-  node[:lxc][:interfaces][new_resource.container] ||= []
+  interfaces = node[:lxc][:interfaces] || Mash.new
+  interfaces[new_resource.container] ||= []
+  node[:lxc][:interfaces] = interfaces
 end
 
 action :create do
@@ -55,7 +56,9 @@ action :create do
   end
 
   unless(node[:lxc][:interfaces][new_resource.container].include?(net_set))
-    node[:lxc][:interfaces][new_resource.container] << net_set
+    current_interfaces = node[:lxc][:interfaces][new_resource.container].dup
+    current_interfaces << net_set
+    node[:lxc][:interfaces][new_resource.contaienr] = current_interfaces
     new_resource.updated_by_last_action(true)
   end
 end
@@ -88,7 +91,9 @@ action :delete do
   end
 
   if(node[:lxc][:interfaces][new_resource.container].include?(net_set))
-    node[:lxc][:interfaces][new_resource.container].delete(net_set)
+    current_interfaces = node[:lxc][:interfaces][new_resource.container].dup
+    current_interfaces.delete(net_set)
+    node[:lxc][:interfaces][new_resource.contaienr] = current_interfaces
     new_resource.updated_by_last_action(true)
   end
 end

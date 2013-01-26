@@ -5,8 +5,9 @@ def load_current_resource
     :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
   )
   @loaded ||= {}
-  node[:lxc][:fstabs] ||= Mash.new
-  node[:lxc][:fstabs][new_resource.container] ||= []
+  fstabs = node[:lxc][:fstabs] || Mash.new
+  fstabs[new_resource.container] ||= []
+  node.set[:lxc][:fstabs] = fstabs
 end
 
 action :create do
@@ -32,7 +33,9 @@ action :create do
     "#{new_resource.type}\t#{Array(new_resource.options).join(',')}\t" <<
     "#{new_resource.dump}\t#{new_resource.pass}"
   unless(node[:lxc][:fstabs][new_resource.container].include?(line))
-    node[:lxc][:fstabs][new_resource.container] << line
+    lines = node[:lxc][:fstabs][new_resource.container].dup
+    lines << line
+    node[:lxc][:fstabs][new_resource.container] = lines
     new_resource.updated_by_last_action(true)
   end
 
