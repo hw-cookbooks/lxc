@@ -153,6 +153,10 @@ class Lxc
   end
   alias_method :rootfs, :container_rootfs
 
+  def expand_path(path)
+    File.join(container_rootfs, path)
+  end
+
   # Start the container
   def start
     run_command("lxc-start -n #{name} -d")
