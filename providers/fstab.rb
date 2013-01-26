@@ -5,7 +5,7 @@ def load_current_resource
     :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
   )
   @loaded ||= {}
-  node[:lxc][:fstabs] ||= Mash.new
+  node.set[:lxc][:fstabs] ||= Mash.new
   node[:lxc][:fstabs][new_resource.container] ||= []
 end
 
