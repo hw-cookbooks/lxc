@@ -20,7 +20,7 @@ attribute :default_fstab, :kind_of => [TrueClass, FalseClass], :default => true
 attribute :container_commands, :kind_of => Array, :default => []
 attribute :initialize_commands, :kind_of => Array, :default => []
 attribute :new_container, :kind_of => [TrueClass, FalseClass], :default => false
-attribute :template, :equal_to => %w(fedora debian ubuntu ubuntu-cloud), :default => 'ubuntu'
+attribute :template, :kind_of => String, :default => 'ubuntu'
 attribute :template_opts, :kind_of => Hash, :default => {}
 attribute :_lxc
 # TODO: We should ultimately have support for all these templates

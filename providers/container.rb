@@ -167,7 +167,6 @@ action :create do
             path ::File.join(new_resource._lxc.rootfs, 'etc', 'chef', 'encrypted_data_bag_secret')
             content ::File.open(new_resource.data_bag_secret_file, "rb").read
             mode 0600
-            action :nothing
           end
         else
           Chef::Log.warn "Could not read #{new_resource.data_bag_secret_file}"
