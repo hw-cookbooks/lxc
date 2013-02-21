@@ -35,7 +35,7 @@ action :create do
   unless(node[:lxc][:fstabs][new_resource.container].include?(line))
     lines = node[:lxc][:fstabs][new_resource.container].dup
     lines << line
-    node[:lxc][:fstabs][new_resource.container] = lines
+    node.default[:lxc][:fstabs][new_resource.container] = lines
     new_resource.updated_by_last_action(true)
   end
 
