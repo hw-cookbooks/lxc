@@ -13,7 +13,9 @@ iface <%= net_set[:device] %> inet dhcp
 <% else -%>
 iface <%= net_set[:device] %> inet static
   address <%= net_set[:address] %>
+<% if net_set[:gateway] %>
   gateway <%= net_set[:gateway] %>
+<% end %>
   netmask <%= net_set[:netmask] %>
 <% end -%>
 <% end %>
