@@ -40,7 +40,6 @@ action :create do
     lxc_config new_resource.name do
       action :create
       default_bridge new_resource.default_bridge
-      static_ip new_resource.static_ip
     end
   end
 
