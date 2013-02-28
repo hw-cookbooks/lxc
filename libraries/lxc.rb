@@ -96,7 +96,7 @@ class Lxc
   # Returns container IP
   def container_ip(retries=0)
     retries.to_i.times do
-      ip = leased_address || lxc_stored_address
+      ip = leased_address || lxc_stored_address || lxc_interfaces_address
       return ip if ip && self.class.connection_alive?(ip)
       Chef::Log.warn "LXC IP discovery: Failed to detect live IP"
       sleep(3)
@@ -112,7 +112,22 @@ class Lxc
     if(ip.to_s.empty?)
       nil
     else
-      Chef::Log.info "LXC Discovery: Found container address via storage: #{ip}"
+      Chef::Log.info "LXC Discovery: Found container address via config file: #{ip}"
+      ip
+    end
+  end
+
+  # Container address via network interfaces file within container
+  def lxc_interfaces_address
+    int_file = File.join(rootfs, 'etc/network/interfaces')
+    if(File.exists?(int_file))
+    ip = File.readlines(int_file).detect{|line|
+      line.include?('address')
+    }.to_s.split(' ').last.to_s.strip
+    if(ip.to_s.empty?)
+      nil
+    else
+      Chef::Log.info "LXC Discovery: Found container address via interfaces file: #{ip}"
       ip
     end
   end
