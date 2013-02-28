@@ -22,9 +22,7 @@ def load_current_resource
       raise 'netmask is not valid' if oct.to_i > 255
     end
   end
-  interfaces = node[:lxc][:interfaces] || Mash.new
-  interfaces[new_resource.container] ||= []
-  node.default[:lxc][:interfaces] = interfaces
+  node.default[:lxc][:interfaces][new_resource.container] = []
 end
 
 action :create do
