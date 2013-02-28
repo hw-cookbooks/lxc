@@ -121,9 +121,10 @@ class Lxc
   def lxc_interfaces_address
     int_file = File.join(rootfs, 'etc/network/interfaces')
     if(File.exists?(int_file))
-    ip = File.readlines(int_file).detect{|line|
-      line.include?('address')
-    }.to_s.split(' ').last.to_s.strip
+      ip = File.readlines(int_file).detect{|line|
+        line.include?('address')
+      }.to_s.split(' ').last.to_s.strip
+    end
     if(ip.to_s.empty?)
       nil
     else
