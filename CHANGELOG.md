@@ -1,3 +1,6 @@
+## v0.1.1
+* Fix lxc configuration when static_ip is provided via container resource
+
 ## v0.1.0
 * Abstracted out packages for cross-platform support later.
 * Added the 'containers' recipe to create containers for the members of the node['lxc']['containers'] hash
