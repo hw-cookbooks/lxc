@@ -86,6 +86,16 @@ action :create do
       end
       not_if "grep \"route add default gw #{new_resource.static_gateway}\" #{::File.join(new_resource._lxc.rootfs, 'etc', 'rc.local')}"
     end
+  else
+    found = !!run_context.resource_collection.all_resources.detect do |resource|
+      resource.is_a?(Chef::Resource::LxcInterface) && resource.container == new_resource.name
+    end
+    if(found)
+      lxc_interface "file write[#{new_resource.name}]" do
+        container new_resource.name
+        action :write
+      end
+    end
   end
 
   #### Ensure host has ssh access into container
