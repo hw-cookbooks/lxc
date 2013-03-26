@@ -13,7 +13,7 @@ def load_current_resource
   end
   node.run_state[:lxc] ||= Mash.new
   node.run_state[:lxc][:interfaces] ||= Mash.new
-  node.run_state[:lxc][new_resource.container] ||= []
+  node.run_state[:lxc][:interfaces][new_resource.container] ||= []
 end
 
 action :create do
