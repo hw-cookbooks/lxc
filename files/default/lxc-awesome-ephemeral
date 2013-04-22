@@ -27,6 +27,7 @@ help() {
     echo "rdir        : host directory to store rootfs overlay"
     echo "ipaddress  : static ipv4 to use instead of dhcp"
     echo "-d          : run in the background"
+    echo "-n          : name for the ephemeral container"
     echo "-U          : type of union (aufs or overlayfs)"
     echo "              Default is overlayfs"
     echo "-D          : block device for rootfs overlay"
@@ -439,7 +440,6 @@ start_container()
         echo "$LXC_NAME is running"
         echo "You connect with the command:"
         echo "    sudo lxc-console -n $LXC_NAME"
-        sudo lxc-wait -n $LXC_NAME -s STOPPED
     fi
 }
 
@@ -484,14 +484,18 @@ handle_container()
 {
     setup_container
     start_container
+    sudo lxc-wait -n $LXC_NAME -s STOPPED
     RET=$?
     stop_container
     exit $RET
 }
 
 if [ $DAEMON -eq 1 ]; then
-    handle_container &
+    setup_container
+    start_container
     exit 0
+    RET=$?
+    exit $RET
 fi
 
 handle_container
