@@ -9,7 +9,7 @@ LXC_BIND=""
 UNION="overlayfs"
 
 usage() {
-    echo "usage: lxc-awesome-ephemeral [-I ip_address] [-G gateway] [-N netmask] [-D size] [-z rdir] [-U uniontype] [-d|--daemon] [-h] [-b bdir] [-u user] [-S key] -o orig -- [COMMAND [ARGS...]]"
+    echo "usage: lxc-awesome-ephemeral [-I ip_address] [-G gateway] [-N netmask] [-D size] [-z rdir] [-U uniontype] [-d|--daemon] [-h] [-b bdir] [-u user] [-S key] -o orig [-n name] -- [COMMAND [ARGS...]]"
 }
 
 help() {
@@ -19,6 +19,7 @@ help() {
     echo
     echo "Options:"
     echo "orig        : name of the original container"
+    echo "name        : name of new container"
     echo "bdir        : directory to bind mount into container"
     echo "user        : the user to connect to the container as"
     echo "key         : the path to the SSH key to use to connect"
@@ -39,8 +40,8 @@ help() {
     echo "wait until the container is shut down"
 }
 
-shortoptions='hb:o:u:D:z:I:G:N:S:dU:'
-longoptions='help,orig:,bdir:,user:,device:,directory:,ipaddress:,gateway:,netmask:,ssh-key:,daemon,union:'
+shortoptions='hb:o:u:D:z:I:G:N:S:dU:n:'
+longoptions='help,orig:,bdir:,user:,device:,directory:,ipaddress:,gateway:,netmask:,ssh-key:,name:,daemon,union:'
 
 LXC_RUNNING=0
 LXC_MOUNTED=0
@@ -148,6 +149,11 @@ while true; do
             LXC_BASE=$1
             shift
         ;;
+        -n|--name)
+            shift
+            LXC_NAME=$1
+            shift
+        ;;
         -D|--device)
             shift
             OVERLAY_DEVICE=$1
@@ -240,9 +246,16 @@ setup_container()
         OVERLAY_DIR=`mktemp -d /tmp/lxc-lp-XXXXXXX`
         sudo mount -t tmpfs none $OVERLAY_DIR
     fi
-    LXC_DIR=`sudo mktemp -d --tmpdir=/var/lib/lxc $LXC_BASE-temp-XXXXXXX`
+
+    if [ -z $LXC_NAME ] ; then
+        LXC_NAME=`basename $LXC_DIR`
+        LXC_DIR=`sudo mktemp -d --tmpdir=/var/lib/lxc $LXC_BASE-temp-XXXXXXX`
+    else
+        `sudo mkdir /var/lib/lxc/$LXC_NAME`
+        LXC_DIR=/var/lib/lxc/$LXC_NAME
+    fi
+
     sudo chmod 755 ${LXC_DIR}
-    LXC_NAME=`basename $LXC_DIR`
     sudo mkdir ${LXC_DIR}/rootfs
     do_mount "/var/lib/lxc/$LXC_BASE/rootfs" "${OVERLAY_DIR}" ${LXC_DIR}/rootfs
     EPHEMERAL_BIND_DIR=$LXC_DIR/ephemeralbind
