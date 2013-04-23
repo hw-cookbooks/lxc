@@ -1,6 +1,27 @@
 actions :create, :delete
 default_action :create
 
+attr_accessor :configuration
+
+def network(*args, &block)
+end
+
+def method_missing(sym, *args, &block)
+end
+
+def 
+
+
+
+config 'thing' do
+  utsname 'fubar'
+  pts 1024
+  network 'name' do
+    bridge 'thing'
+    ipv4 'other things'
+  end
+end
+
 attribute :utsname, :kind_of => String, :default => nil # defaults to resource name
 attribute :aa_profile, :kind_of => String, :default => nil # platform specific?
 attribute :network, :kind_of => [Array, Hash]
