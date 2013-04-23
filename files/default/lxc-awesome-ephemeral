@@ -9,7 +9,7 @@ LXC_BIND=""
 UNION="overlayfs"
 
 usage() {
-    echo "usage: lxc-awesome-ephemeral [-I ipaddress] [-G gateway] [-N netmask] [-D size] [-z rdir] [-U uniontype] [-d|--daemon] [-h] [-b bdir] [-u user] [-S key] -o orig [-n name] -- [COMMAND [ARGS...]]"
+    echo "usage: lxc-awesome-ephemeral [-I ipaddress] [-G gateway] [-N netmask] [-D size] [-z rdir] [-U uniontype] [-d|--daemon] [-h] [-b bdir] [-u user] [-S key] [-c clean] -o orig [-n name] -- [COMMAND [ARGS...]]"
 }
 
 help() {
@@ -25,8 +25,10 @@ help() {
     echo "key         : the path to the SSH key to use to connect"
     echo "size        : size of virtual device in M"
     echo "rdir        : host directory to store rootfs overlay"
-    echo "ipaddress  : static ipv4 to use instead of dhcp"
+    echo "ipaddress   : static ipv4 to use instead of dhcp"
+    echo "clean       : cleanup directories"
     echo "-d          : run in the background"
+    echo "-c          : clean up directories created for an ephemeral container"
     echo "-n          : name for the ephemeral container"
     echo "-U          : type of union (aufs or overlayfs)"
     echo "              Default is overlayfs"
@@ -38,15 +40,17 @@ help() {
     echo
     echo "if a COMMAND is given, then the container will run only as long"
     echo "as the command runs.  If no COMMAND is given, this command will"
-    echo "wait until the container is shut down"
+    echo "wait until the container is shut down. In the case of --cleanup,"
+    echo "any provided command will be ignored"
 }
 
-shortoptions='hb:o:u:D:z:I:G:N:S:dU:n:'
-longoptions='help,orig:,bdir:,user:,device:,directory:,ipaddress:,gateway:,netmask:,ssh-key:,name:,daemon,union:'
+shortoptions='hb:o:u:D:z:I:G:N:S:dU:n:c'
+longoptions='help,orig:,bdir:,user:,clean,device:,directory:,ipaddress:,gateway:,netmask:,ssh-key:,name:,daemon,union:'
 
 LXC_RUNNING=0
 LXC_MOUNTED=0
 DAEMON=0
+CLEAN=0
 
 cleanup_dirs()
 {
@@ -115,7 +119,8 @@ do_mount() {
         echo "Using local block device for overlay mounted at: ${HOST_OVERLAY_DIRECTORY}"
     elif [ $HOST_OVERLAY_DIRECTORY ]; then
         mkdir -p $HOST_OVERLAY_DIRECTORY
-        HOST_OVERLAY_DIRECTORY=`mktemp -d --tmpdir=$HOST_OVERLAY_DIRECTORY $LXC_BASE-temp-XXXXXXX`
+        mkdir "$HOST_OVERLAY_DIRECTORY/$LXC_NAME"
+        HOST_OVERLAY_DIRECTORY="$HOST_OVERLAY_DIRECTORY/$LXC_NAME"
         upper=$HOST_OVERLAY_DIRECTORY
         echo "Using local directory for overlay: ${HOST_OVERLAY_DIRECTORY}"
     else
@@ -180,6 +185,10 @@ while true; do
             LXC_KEY="-i $1"
             shift
         ;;
+        -c|--clean)
+            CLEAN=1
+            shift
+        ;;
         -d|--detach)
             DAEMON=1
             shift
@@ -236,6 +245,19 @@ if [ "$UNION" != "overlayfs" -a "$UNION" != "aufs" ]; then
     exit 1
 fi
 
+decide_dirs()
+{
+    if [ -z "$LXC_NAME" ] ; then
+       echo "You can only use the --clean option if the --name option is also specified "
+    fi
+    EPHEMERAL_BIND_DIR=/var/lib/lxc/$LXC_NAME/ephemeralbind
+    # echo "umounting ephemeral_bind_dir $EPHEMERAL_BIND_DIR" >&2
+    LXC_DIR=/var/lib/lxc/$LXC_NAME
+    if [ -z $HOST_OVERLAY_DIRECTORY ] && [ -z $OVERLAY_DEVICE ] ; then
+        OVERLAY_DIR=/tmp/lxc-$LXC_NAME
+    fi
+}
+
 setup_container()
 {
     echo "Setting up ephemeral container..."
@@ -243,18 +265,22 @@ setup_container()
         echo " -- Using local directory for overlay: ${HOST_OVERLAY_DIRECTORY}"
     elif [ $OVERLAY_DEVICE ]; then
         echo " -- Using overlay virtual block device"
-    else
-        OVERLAY_DIR=`mktemp -d /tmp/lxc-lp-XXXXXXX`
-        sudo mount -t tmpfs none $OVERLAY_DIR
     fi
 
     if [ -z $LXC_NAME ] ; then
-        LXC_NAME=`basename $LXC_DIR`
         LXC_DIR=`sudo mktemp -d --tmpdir=/var/lib/lxc $LXC_BASE-temp-XXXXXXX`
+        LXC_NAME=`basename $LXC_DIR`
     else
         `sudo mkdir /var/lib/lxc/$LXC_NAME`
         LXC_DIR=/var/lib/lxc/$LXC_NAME
     fi
+
+    if [ -z $HOST_OVERLAY_DIRECTORY ] && [ -z $OVERLAY_DEVICE ] ; then
+        mkdir /tmp/lxc-$LXC_NAME
+        OVERLAY_DIR=/tmp/lxc-$LXC_NAME
+        sudo mount -t tmpfs none $OVERLAY_DIR
+    fi
+
 
     sudo chmod 755 ${LXC_DIR}
     sudo mkdir ${LXC_DIR}/rootfs
@@ -490,10 +516,16 @@ handle_container()
     exit $RET
 }
 
+if [ $CLEAN -eq 1 ]; then
+    decide_dirs
+    stop_container
+    RET=$?
+    exit $RET
+fi
+
 if [ $DAEMON -eq 1 ]; then
     setup_container
     start_container
-    exit 0
     RET=$?
     exit $RET
 fi
