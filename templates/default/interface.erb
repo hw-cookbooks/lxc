@@ -4,6 +4,7 @@
 auto lo
 iface lo inet loopback
 
+<% if node.run_state[:lxc][:interfaces][@container] -%>
 <% node.run_state[:lxc][:interfaces][@container].each do |net_set| -%>
 <% if net_set[:auto] -%>
 auto <%= net_set[:device] %>
@@ -25,3 +26,12 @@ iface <%= net_set[:device] %> inet<%= '6' if net_set[:ipv6] %> static
 <% end -%>
 <% end -%>
 <% end %>
+<% end -%>
+<% unless(dyns = node.run_state[:lxc][:interfaces]["#{@container}_dynamics"].empty?) -%>
+<% dyns.each do |key, hash| -%>
+<%= key %>
+  <% hash.each_pair do |k,v| -%>
+  <%= k %> <%= v %>
+  <% end -%>
+<% end %>
+<% end -%>
