@@ -284,7 +284,7 @@ setup_container()
             then
             # ...then we should write some form of this line.
             # If this line is a bind...
-            if [ `echo -n $line | awk '{print $4}'` == "bind" ]; then
+            if [ "`echo -n $line | awk '{print $4}'`" = "bind" ]; then
                 # ...we should rewrite it as an overlay.
                 source=`echo -n $line | awk '{print $1}'`
                 upperdir=$EPHEMERAL_BIND_DIR$source
