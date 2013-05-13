@@ -9,7 +9,7 @@ LXC_BIND=""
 UNION="overlayfs"
 
 usage() {
-    echo "usage: lxc-awesome-ephemeral [-I ip_address] [-G gateway] [-N netmask] [-D size] [-z rdir] [-U uniontype] [-d|--daemon] [-h] [-b bdir] [-u user] [-S key] -o orig -- [COMMAND [ARGS...]]"
+    echo "usage: lxc-awesome-ephemeral [-I ipaddress] [-G gateway] [-N netmask] [-D size] [-z rdir] [-U uniontype] [-d|--daemon] [-h] [-b bdir] [-u user] [-S key] [-c clean] -o orig [-n name] -- [COMMAND [ARGS...]]"
 }
 
 help() {
@@ -19,13 +19,17 @@ help() {
     echo
     echo "Options:"
     echo "orig        : name of the original container"
+    echo "name        : name of new container"
     echo "bdir        : directory to bind mount into container"
     echo "user        : the user to connect to the container as"
     echo "key         : the path to the SSH key to use to connect"
     echo "size        : size of virtual device in M"
     echo "rdir        : host directory to store rootfs overlay"
-    echo "ip_address  : static ipv4 to use instead of dhcp"
+    echo "ipaddress   : static ipv4 to use instead of dhcp"
+    echo "clean       : cleanup directories"
     echo "-d          : run in the background"
+    echo "-c          : clean up directories created for an ephemeral container"
+    echo "-n          : name for the ephemeral container"
     echo "-U          : type of union (aufs or overlayfs)"
     echo "              Default is overlayfs"
     echo "-D          : block device for rootfs overlay"
@@ -36,15 +40,17 @@ help() {
     echo
     echo "if a COMMAND is given, then the container will run only as long"
     echo "as the command runs.  If no COMMAND is given, this command will"
-    echo "wait until the container is shut down"
+    echo "wait until the container is shut down. In the case of --cleanup,"
+    echo "any provided command will be ignored"
 }
 
-shortoptions='hb:o:u:D:z:I:G:N:S:dU:'
-longoptions='help,orig:,bdir:,user:,device:,directory:,ipaddress:,gateway:,netmask:,ssh-key:,daemon,union:'
+shortoptions='hb:o:u:D:z:I:G:N:S:dU:n:c'
+longoptions='help,orig:,bdir:,user:,clean,device:,directory:,ipaddress:,gateway:,netmask:,ssh-key:,name:,daemon,union:'
 
 LXC_RUNNING=0
 LXC_MOUNTED=0
 DAEMON=0
+CLEAN=0
 
 cleanup_dirs()
 {
@@ -113,7 +119,8 @@ do_mount() {
         echo "Using local block device for overlay mounted at: ${HOST_OVERLAY_DIRECTORY}"
     elif [ $HOST_OVERLAY_DIRECTORY ]; then
         mkdir -p $HOST_OVERLAY_DIRECTORY
-        HOST_OVERLAY_DIRECTORY=`mktemp -d --tmpdir=$HOST_OVERLAY_DIRECTORY $LXC_BASE-temp-XXXXXXX`
+        mkdir "$HOST_OVERLAY_DIRECTORY/$LXC_NAME"
+        HOST_OVERLAY_DIRECTORY="$HOST_OVERLAY_DIRECTORY/$LXC_NAME"
         upper=$HOST_OVERLAY_DIRECTORY
         echo "Using local directory for overlay: ${HOST_OVERLAY_DIRECTORY}"
     else
@@ -148,6 +155,11 @@ while true; do
             LXC_BASE=$1
             shift
         ;;
+        -n|--name)
+            shift
+            LXC_NAME=$1
+            shift
+        ;;
         -D|--device)
             shift
             OVERLAY_DEVICE=$1
@@ -171,6 +183,10 @@ while true; do
         -S|--ssh-key)
             shift
             LXC_KEY="-i $1"
+            shift
+        ;;
+        -c|--clean)
+            CLEAN=1
             shift
         ;;
         -d|--detach)
@@ -229,6 +245,19 @@ if [ "$UNION" != "overlayfs" -a "$UNION" != "aufs" ]; then
     exit 1
 fi
 
+decide_dirs()
+{
+    if [ -z "$LXC_NAME" ] ; then
+       echo "You can only use the --clean option if the --name option is also specified "
+    fi
+    EPHEMERAL_BIND_DIR=/var/lib/lxc/$LXC_NAME/ephemeralbind
+    # echo "umounting ephemeral_bind_dir $EPHEMERAL_BIND_DIR" >&2
+    LXC_DIR=/var/lib/lxc/$LXC_NAME
+    if [ -z $HOST_OVERLAY_DIRECTORY ] && [ -z $OVERLAY_DEVICE ] ; then
+        OVERLAY_DIR=/tmp/lxc-$LXC_NAME
+    fi
+}
+
 setup_container()
 {
     echo "Setting up ephemeral container..."
@@ -236,13 +265,24 @@ setup_container()
         echo " -- Using local directory for overlay: ${HOST_OVERLAY_DIRECTORY}"
     elif [ $OVERLAY_DEVICE ]; then
         echo " -- Using overlay virtual block device"
+    fi
+
+    if [ -z $LXC_NAME ] ; then
+        LXC_DIR=`sudo mktemp -d --tmpdir=/var/lib/lxc $LXC_BASE-temp-XXXXXXX`
+        LXC_NAME=`basename $LXC_DIR`
     else
-        OVERLAY_DIR=`mktemp -d /tmp/lxc-lp-XXXXXXX`
+        `sudo mkdir /var/lib/lxc/$LXC_NAME`
+        LXC_DIR=/var/lib/lxc/$LXC_NAME
+    fi
+
+    if [ -z $HOST_OVERLAY_DIRECTORY ] && [ -z $OVERLAY_DEVICE ] ; then
+        mkdir /tmp/lxc-$LXC_NAME
+        OVERLAY_DIR=/tmp/lxc-$LXC_NAME
         sudo mount -t tmpfs none $OVERLAY_DIR
     fi
-    LXC_DIR=`sudo mktemp -d --tmpdir=/var/lib/lxc $LXC_BASE-temp-XXXXXXX`
+
+
     sudo chmod 755 ${LXC_DIR}
-    LXC_NAME=`basename $LXC_DIR`
     sudo mkdir ${LXC_DIR}/rootfs
     do_mount "/var/lib/lxc/$LXC_BASE/rootfs" "${OVERLAY_DIR}" ${LXC_DIR}/rootfs
     EPHEMERAL_BIND_DIR=$LXC_DIR/ephemeralbind
@@ -272,6 +312,22 @@ setup_container()
             sudo sed -i -e "s/$LXC_BASE/$LXC_NAME/" $file
         fi
     done
+
+    dist=`cat  $LXC_DIR/rootfs/etc/issue | head -n 1 | cut -f1 -d\ `
+    if [ $dist = 'CentOS' ] ; then
+        DISTRO="EL"
+    else
+        DISTRO="DEBIAN"
+    fi
+
+    # special tweaks for the centos family of distributions
+    if [ $DISTRO = "EL" ] ; then
+        cat <<EOF > $LXC_DIR/rootfs/etc/sysconfig/network
+NETWORKING=yes
+HOSTNAME=$LXC_NAME
+EOF
+    echo "hostname $LXC_NAME" >> $LXC_DIR/rootfs/etc/rc.local
+    fi
 
     # Update the fstab to have all bind mounts be ephemeral.
     sudo cp $LXC_DIR/fstab $LXC_DIR/fstab.old
@@ -410,13 +466,26 @@ start_container()
         echo "$LXC_NAME is running"
         echo "You connect with the command:"
         echo "    sudo lxc-console -n $LXC_NAME"
-        sudo lxc-wait -n $LXC_NAME -s STOPPED
     fi
 }
 
 write_custom_networking()
 {
-    cat <<EOF > $LXC_DIR/rootfs/etc/network/interfaces
+    if [ $DISTRO = "EL" ] ; then
+        cat <<EOF > $LXC_DIR/rootfs/etc/sysconfig/network-scripts/ifcfg-eth0
+DEVICE=eth0
+BOOTPROTO=static
+NETMASK=$CUSTOM_NETMASK
+IPADDR=$CUSTOM_IPADDRESS
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=yes
+PEERDNS=yes
+IPV6INIT=no
+GATEWAY=$CUSTOM_GATEWAY
+EOF
+    else
+        cat <<EOF > $LXC_DIR/rootfs/etc/network/interfaces
 auto lo
 iface lo inet loopback
 auto eth0
@@ -425,6 +494,7 @@ address $CUSTOM_IPADDRESS
 netmask $CUSTOM_NETMASK
 gateway $CUSTOM_GATEWAY
 EOF
+    fi
 }
 
 stop_container()
@@ -440,14 +510,24 @@ handle_container()
 {
     setup_container
     start_container
+    sudo lxc-wait -n $LXC_NAME -s STOPPED
     RET=$?
     stop_container
     exit $RET
 }
 
+if [ $CLEAN -eq 1 ]; then
+    decide_dirs
+    stop_container
+    RET=$?
+    exit $RET
+fi
+
 if [ $DAEMON -eq 1 ]; then
-    handle_container &
-    exit 0
+    setup_container
+    start_container
+    RET=$?
+    exit $RET
 fi
 
 handle_container
