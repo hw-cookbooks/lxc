@@ -4,11 +4,12 @@ class Chef
   class Util
     class AttributeStruct < OpenStruct
 
-      # TODO: nested handling:
-      # * fubar.feebar.thing = 'hi'
-      # * multiple exec blocks triggers error on define method
       def initialize(*args, &block)
         super
+      end
+
+      def [](key)
+        _data[key.to_sym]
       end
       
       def method_missing(sym, *args, &block)
@@ -41,6 +42,10 @@ class Chef
           end
         end
         name
+      end
+
+      def _data
+        @table
       end
     end
   end
