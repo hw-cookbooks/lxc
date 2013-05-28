@@ -33,8 +33,8 @@ def process_interface_stanza(name, *args, &block)
   @dynamic_configs ||= Mash.new
   key = [name, *args].map(&:to_s).join(' ')
   struct = Chef::Util::AttributeStruct.new
-  struct.instance_exec(&block)
-  @dynamic_configs[key] = struct.send(:table)
+  struct.instance_exec(&block) if block
+  @dynamic_configs[key] = struct._data
 end
 
 # deprecated attributes
