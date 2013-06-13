@@ -1,12 +1,15 @@
 require 'securerandom'
 
 def load_current_resource
+  new_resource.utsname new_resource.container if new_resource.container
+  new_resource.utsname new_resource.name unless new_resource.utsname
+
   @lxc = ::Lxc.new(
-    new_resource.name,
+    new_resource.utsname,
     :base_dir => node[:lxc][:container_directory],
     :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
   )
-  new_resource.utsname new_resource.name unless new_resource.utsname
+
   new_resource.rootfs @lxc.rootfs.to_path unless new_resource.rootfs
   new_resource.default_bridge node[:lxc][:bridge] unless new_resource.default_bridge
   new_resource.mount @lxc.path.join('fstab').to_path unless new_resource.mount
