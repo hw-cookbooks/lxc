@@ -13,15 +13,22 @@ class Chef
       end
       
       def method_missing(sym, *args, &block)
-        if(!sym.to_s.end_with?('=') && !args.empty?)
-          super("#{sym}=".to_sym, *args)
-        end
-        if(block)
-          val = self.class.new
-          val.instance_exec(&block)
-          super("#{sym}=".to_sym, val)
-        end
         new_ostruct_member(sym)
+        if(block)
+          block_val = self.class.new
+          block_val.instance_exec(&block)
+        end
+        if(!args.empty? || block)
+          set_sym = sym.to_s.end_with?('=') ? sym : "#{sym}=".to_sym
+          if(args.empty? && block)
+            send(set_sym, block_val)
+          elsif(!args.empty? && block)
+            base = send(sym)
+            base.send(args.first, block_val)
+          else
+            send(set_sym, args.first)
+          end
+        end
         send(sym)
       end
 
