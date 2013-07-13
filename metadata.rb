@@ -10,3 +10,5 @@ supports 'ubuntu'
 
 suggests 'omnibus_updater'
 suggests 'bridger'
+
+depends 'dpkg_autostart', '~> 0.1.2'
