@@ -1,3 +1,34 @@
+dpkg_autostart 'lxc' do
+  allow false
+end
+
+dpkg_autostart 'lxc-net' do
+  allow false
+end
+
+# Start at 0 and increment up if found
+unless(node[:network][:interfaces][:lxcbr0])
+  max = node.network.interfaces.map do |name, val|
+    Array(val[:routes]).map do |route|
+      if(route[:family] == 'inet' && route[:destination].start_with?('10.0'))
+        route[:destination].split('/').first.split('.')[3].to_i
+      end
+    end
+  end.compact.max
+
+  node.default[:lxc][:network_device][:oct] = max ? max + 1 : 0
+  
+  # Test for existing bridge. Use different subnet if found
+  l_net = "10.0.#{node[:lxc][:network_device][:oct]}"
+  node.set[:lxc][:default_config][:lxc_addr] = "#{l_net}.1"
+end
+
+lxc_net_prefix = node[:lxc][:default_config][:lxc_addr].sub(%r{\.1$}, '')
+
+node.default[:lxc][:default_config][:lxc_network] = "#{lxc_net_prefix}.0/24"
+node.set[:lxc][:default_config][:lxc_dhcp_range] = "#{lxc_net_prefix}.2,#{lxc_net_prefix}.254"
+node.set[:lxc][:default_config][:lxc_dhcp_max] = '150'
+
 # install the server dependencies to run lxc
 node[:lxc][:packages].each do |lxcpkg|
   package lxcpkg
@@ -5,25 +36,33 @@ end
 
 include_recipe 'lxc::install_dependencies'
 
-directory '/usr/local/bin' do
-  recursive true
+file '/usr/local/bin/lxc-awesome-ephemeral' do
+  action :delete
+  only_if{ node[:lxc][:deprecated][:delete_awesome_ephemerals] }
 end
 
-cookbook_file '/usr/local/bin/lxc-awesome-ephemeral' do
-  source 'lxc-awesome-ephemeral'
-  mode 0755
-end
-
-#if the server uses the apt::cacher-client recipe, re-use it
-unless Chef::Config[:solo]
-  if File.exists?('/etc/apt/apt.conf.d/01proxy')
+# if the host uses the apt::cacher-client recipe, re-use it
+# Is the host a cacher?
+if(system("service apt-cacher-ng status 2>&1") && Chef::Config[:solo])
+  node.default[:lxc][:default_config][:mirror] = "http://#{lxc_net_prefix}.1:3142/archive.ubuntu.com/"
+elsif(File.exists?('/etc/apt/apt.conf.d/01proxy'))
+  if(Chef::Config[:solo])
+    proxy = File.readlines('/etc/apt/apt.conf.d/01proxy').detect do |line|
+      line.include?('http::Proxy')
+    end.to_s.split(' ').last.to_s.tr('";', '')
+    unless(proxy.empty?)
+      node.default[:lxc][:default_config][:mirror] = proxy
+    end
+  else
     query = 'recipes:apt\:\:cacher-ng'
-    query += " AND chef_environment:#{node.chef_environment}" if node['apt']['cacher-client']['restrict_environment']
+    if(node[:apt]['cacher-client'][:restrict_environment])
+      query += " AND chef_environment:#{node.chef_environment}"
+    end
     Chef::Log.debug("apt::cacher-client searching for '#{query}'")
     servers = search(:node, query)
-    if servers.length > 0
+    unless(servers.empty?)
       Chef::Log.info("apt-cacher-ng server found on #{servers[0]}.")
-      node.default[:lxc][:mirror] = "http://#{servers[0]['ipaddress']}:3142/archive.ubuntu.com/ubuntu"
+      node.default[:lxc][:default_config][:mirror] = "http://#{servers.first['ipaddress']}:#{servers.first[:apt][:cacher_port] || 3142}/archive.ubuntu.com/ubuntu"
     end
   end
 end
@@ -31,25 +70,11 @@ end
 template '/etc/default/lxc' do
   source 'default-lxc.erb'
   mode 0644
-  variables(
-    :config => {
-      :lxc_auto => node[:lxc][:auto_start],
-      :use_lxc_bridge => node[:lxc][:use_bridge],
-      :lxc_bridge => node[:lxc][:bridge],
-      :lxc_addr => node[:lxc][:addr],
-      :lxc_netmask => node[:lxc][:netmask],
-      :lxc_network => node[:lxc][:network],
-      :lxc_dhcp_range => node[:lxc][:dhcp_range],
-      :lxc_dhcp_max => node[:lxc][:dhcp_max],
-      :lxc_shutdown_timeout => node[:lxc][:shutdown_timeout],
-      :mirror => node[:lxc][:mirror]
-    }
-  )
 end
 
 # this just reloads the dnsmasq rules when the template is adjusted
 service 'lxc-net' do
-  action [:enable]
+  action [:enable, :start]
   subscribes :restart, resources("template[/etc/default/lxc]"), :immediately
 end
 
