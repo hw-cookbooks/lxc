@@ -81,3 +81,7 @@ end
 service 'lxc' do
   action [:enable, :start]
 end
+
+chef_gem 'elecksee'
+
+require 'elecksee/lxc'
