@@ -1,6 +1,8 @@
 require 'securerandom'
 
 def load_current_resource
+  require 'elecksee/lxc_file_config'
+  
   new_resource.utsname new_resource.container if new_resource.container
   new_resource.utsname new_resource.name unless new_resource.utsname
 
