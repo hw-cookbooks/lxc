@@ -22,7 +22,7 @@ action :clone do
   
   _lxc = @lxc
 
-  unless(_base_lxc.exists?)
+  unless(::Lxc.new(new_resource.base_container).exists?)
     raise "LXC clone failed! Base container #{new_resource.base_container} does not exist. Cannot create #{new_resource.name}"
   end
 
