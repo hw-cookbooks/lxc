@@ -2,6 +2,8 @@
 
 require 'json'
 require 'getoptlong'
+require 'elecksee/lxc'
+require 'elecksee/clone'
 
 LXC_HOME = '/var/lib/lxc'
 
@@ -100,17 +102,15 @@ def sudoable_ubuntu(name)
 end
 
 def clone_container(name, template)
-  %x{lxc-clone -o #{template}_base -n #{name}}
+  Lxc::Clone(:original => "#{template}_base", :new_name => name).clone!
 end
 
 def start_container(name)
-  %x{lxc-start -n #{name} -d}
-  %x{lxc-wait -n #{name} -s RUNNING}
+  Lxc.new(name).start
 end
 
 def stop_container(name)
-  %x{lxc-shutdown -n #{name} -d}
-  %x{lxc-wait -n #{name} -s STOPPED}
+  Lxc.new(name).stop
 end
 
 def create_lxc(lxc_name, template)
@@ -126,12 +126,7 @@ def create_lxc(lxc_name, template)
 end
 
 def lxc_address(name)
-  if(File.exists?(int = File.join(LXC_HOME, name, 'rootfs', 'etc', 'network', 'interfaces')))
-    addr = File.readlines(int).detect{|l|l.include?('address')}.to_s.split(' ').last.to_s.strip
-    addr.empty? ? 'dynamic' : addr
-  else
-    'dynamic'
-  end
+  Lxc.new(name).container_address
 end
 
 def lxc_type(name)
@@ -170,8 +165,7 @@ def info_lxc(lxc_name)
 end
 
 def delete_lxc(lxc_name)
-  %x{lxc-stop -n #{lxc_name}}
-  %x{lxc-wait -n #{lxc_name} -s STOPPED}
+  Lxc.new(lxc_name).stop
   %x{lxc-destroy -n #{lxc_name}}
 end
 
