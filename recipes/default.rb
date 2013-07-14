@@ -82,6 +82,11 @@ service 'lxc' do
   action [:enable, :start]
 end
 
-chef_gem 'elecksee'
+chef_gem 'elecksee' do
+  if(node[:lxc][:elecksee][:version_restriction])
+    version node[:lxc][:elecksee][:version_restriction]
+  end
+  action node[:lxc][:elecksee][:action]
+end
 
 require 'elecksee/lxc'
