@@ -28,7 +28,7 @@ action :clone do
 
   ruby_block "LXC Clone: #{new_resource.base_container} -> #{new_resource.name}" do
     block do
-      cloner = Lxc::Clone.new(
+      cloner = ::Lxc::Clone.new(
         :original => new_resource.base_container,
         :new_name => new_resource.name
       )
