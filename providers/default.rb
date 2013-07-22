@@ -52,7 +52,7 @@ action :delete do
   end
 
   execute "Destroy container #{new_resource.name}" do
-    command "lxc-destroy #{new_resource.name}"
+    command "lxc-destroy -n #{new_resource.name}"
     only_if do
       _lxc.exists?
     end
