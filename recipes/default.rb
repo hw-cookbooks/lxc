@@ -1,3 +1,4 @@
+=begin
 dpkg_autostart 'lxc' do
   allow false
 end
@@ -5,19 +6,22 @@ end
 dpkg_autostart 'lxc-net' do
   allow false
 end
+=end
 
 # Start at 0 and increment up if found
 unless(node[:network][:interfaces][:lxcbr0])
-  max = node.network.interfaces.map do |name, val|
-    Array(val[:routes]).map do |route|
-      if(route[:family] == 'inet' && route[:destination].start_with?('10.0'))
-        route[:destination].split('/').first.split('.')[3].to_i
-      end
+  max = node.network.interfaces.map do |int, info|
+    info[:routes]
+  end.flatten.compact.map do |routes|
+    if(routes[:family].to_s == 'inet')
+      val = (routes[:via] || routes[:destination])
+      next unless val.start_with?('10.0')
+      val.split('/').first.to_s.split('.')[3].to_i
     end
-  end.compact.max
+  end.flatten.compact.max
 
   node.default[:lxc][:network_device][:oct] = max ? max + 1 : 0
-  
+
   # Test for existing bridge. Use different subnet if found
   l_net = "10.0.#{node[:lxc][:network_device][:oct]}"
   node.set[:lxc][:default_config][:lxc_addr] = "#{l_net}.1"
@@ -28,11 +32,6 @@ lxc_net_prefix = node[:lxc][:default_config][:lxc_addr].sub(%r{\.1$}, '')
 node.default[:lxc][:default_config][:lxc_network] = "#{lxc_net_prefix}.0/24"
 node.set[:lxc][:default_config][:lxc_dhcp_range] = "#{lxc_net_prefix}.2,#{lxc_net_prefix}.254"
 node.set[:lxc][:default_config][:lxc_dhcp_max] = '150'
-
-# install the server dependencies to run lxc
-node[:lxc][:packages].each do |lxcpkg|
-  package lxcpkg
-end
 
 include_recipe 'lxc::install_dependencies'
 
@@ -72,10 +71,15 @@ template '/etc/default/lxc' do
   mode 0644
 end
 
+# install the server dependencies to run lxc
+node[:lxc][:packages].each do |lxcpkg|
+  package lxcpkg
+end
+
 # this just reloads the dnsmasq rules when the template is adjusted
 service 'lxc-net' do
   action [:enable, :start]
-  subscribes :restart, resources("template[/etc/default/lxc]"), :immediately
+  subscribes :restart, resources("template[/etc/default/lxc]")
 end
 
 service 'lxc' do
