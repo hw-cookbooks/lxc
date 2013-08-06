@@ -24,7 +24,7 @@ default[:lxc][:default_config][:lxc_netmask] = node[:lxc][:netmask]
 default[:lxc][:default_config][:lxc_dhcp_range] = node[:lxc][:dhcp_range]
 default[:lxc][:default_config][:lxc_dhcp_max] = node[:lxc][:dhcp_max]
 default[:lxc][:default_config][:lxc_shutdown_timeout] = node[:lxc][:shutdown_timeout]
-default[:lxc][:default_config][:mirror] = node[:lxc][:mirror]
+default[:lxc][:default_config][:mirror] = node[:lxc][:mirror] || 'http://archive.ubuntu.com/ubuntu'
 
 default[:lxc][:knife] = {}
 default[:lxc][:knife][:static_range] = ''
