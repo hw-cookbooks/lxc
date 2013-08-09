@@ -1,4 +1,3 @@
-=begin
 dpkg_autostart 'lxc' do
   allow false
 end
@@ -6,7 +5,6 @@ end
 dpkg_autostart 'lxc-net' do
   allow false
 end
-=end
 
 # Start at 0 and increment up if found
 unless(node[:network][:interfaces][:lxcbr0])
