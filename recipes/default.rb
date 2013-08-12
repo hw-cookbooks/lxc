@@ -27,11 +27,11 @@ end
 
 lxc_net_prefix = node[:lxc][:default_config][:lxc_addr].sub(%r{\.1$}, '')
 
+Chef::Log.debug "Lxc net prefix: #{lxc_net_prefix}"
+
 node.default[:lxc][:default_config][:lxc_network] = "#{lxc_net_prefix}.0/24"
 node.set[:lxc][:default_config][:lxc_dhcp_range] = "#{lxc_net_prefix}.2,#{lxc_net_prefix}.254"
 node.set[:lxc][:default_config][:lxc_dhcp_max] = '150'
-
-include_recipe 'lxc::install_dependencies'
 
 file '/usr/local/bin/lxc-awesome-ephemeral' do
   action :delete
@@ -68,6 +68,8 @@ template '/etc/default/lxc' do
   source 'default-lxc.erb'
   mode 0644
 end
+
+include_recipe 'lxc::install_dependencies'
 
 # install the server dependencies to run lxc
 node[:lxc][:packages].each do |lxcpkg|
