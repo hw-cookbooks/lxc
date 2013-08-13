@@ -1,3 +1,12 @@
+## v1.1.0
+* Use `elecksee` gem for Lxc interaction
+* Add ephemeral LWRP
+* Allow AppArmor configuration
+* Unset default container passwords
+* Allow nesting LWRPs
+* Use `dpkg_autostart` and config ordering to allow lxc installation on hosts with 10.0.0.x address space in use
+* Remove deprecated `lxc-awesome-ephemeral` script by default
+
 ## v1.0.0
 * Extract container actions out to new LWRP `lxc`
 * Update `container` to use `lxc` resource for container actions
