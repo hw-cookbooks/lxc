@@ -64,17 +64,18 @@ elsif(File.exists?('/etc/apt/apt.conf.d/01proxy'))
   end
 end
 
-template '/etc/default/lxc' do
-  source 'default-lxc.erb'
-  mode 0644
-end
-
 include_recipe 'lxc::install_dependencies'
 
 # install the server dependencies to run lxc
 node[:lxc][:packages].each do |lxcpkg|
   package lxcpkg
 end
+
+template '/etc/default/lxc' do
+  source 'default-lxc.erb'
+  mode 0644
+end
+
 
 # this just reloads the dnsmasq rules when the template is adjusted
 service 'lxc-net' do
