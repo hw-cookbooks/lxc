@@ -1,3 +1,7 @@
+## v1.1.2
+* Update lxc package installation to accept existing configuration file
+* Add missing `-n` option in `destroy` action for LWRP (thanks @sanders)
+
 ## v1.1.0
 * Use `elecksee` gem for Lxc interaction
 * Add ephemeral LWRP
