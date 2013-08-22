@@ -1,4 +1,5 @@
-# -*- coding: undecided -*-
+# -*- coding: utf-8 -*-
+
 dpkg_autostart 'lxc' do
   allow false
 end
