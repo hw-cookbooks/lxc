@@ -76,7 +76,7 @@ include_recipe 'lxc::install_dependencies'
 # install the server dependencies to run lxc
 node[:lxc][:packages].each do |lxcpkg|
   package lxcpkg do
-    options '–force-confold'
+    options '-o Dpkg::Options::="--force-confold"'
   end
 end
 
