@@ -43,7 +43,7 @@ end
 # if the host uses the apt::cacher-client recipe, re-use it
 # Is the host a cacher?
 if(system("service apt-cacher-ng status 2>&1") && Chef::Config[:solo])
-  node.default[:lxc][:default_config][:mirror] = "http://#{lxc_net_prefix}.1:3142/archive.ubuntu.com/"
+  node.default[:lxc][:default_config][:mirror] = "http://#{lxc_net_prefix}.1:3142/archive.ubuntu.com/ubuntu"
 elsif(File.exists?('/etc/apt/apt.conf.d/01proxy'))
   if(Chef::Config[:solo])
     proxy = File.readlines('/etc/apt/apt.conf.d/01proxy').detect do |line|
