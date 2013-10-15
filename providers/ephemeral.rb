@@ -28,9 +28,9 @@ action :run do
   }.each do |k,v|
     ephemeral_args[k] = new_resource.send(v) if new_resource.send(v)
   end
-  
+
   ::Lxc::Ephemeral.new(ephemeral_args).start!
 
   # If we ran, we were updated
-  new_resource.updated_by_last_action?(true)
+  new_resource.updated_by_last_action(true)
 end
