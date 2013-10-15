@@ -3,29 +3,13 @@ driver_plugin: vagrant
 platforms:
 - name: ubuntu-12.04
   driver_config:
-    box: opscode-ubuntu-12.04
-    box_url: https://opscode-vm.s3.amazonaws.com/vagrant/boxes/opscode-ubuntu-12.04.box
-  run_list:
-  - recipe[apt]
-- name: ubuntu-10.04
-  driver_config:
-    box: opscode-ubuntu-10.04
-    box_url: https://opscode-vm.s3.amazonaws.com/vagrant/boxes/opscode-ubuntu-10.04.box
-  run_list:
-  - recipe[apt]
-- name: centos-6.3
-  driver_config:
-    box: opscode-centos-6.3
-    box_url: https://opscode-vm.s3.amazonaws.com/vagrant/boxes/opscode-centos-6.3.box
-  run_list:
-  - recipe[yum::epel]
-- name: centos-5.8
-  driver_config:
-    box: opscode-centos-5.8
-    box_url: https://opscode-vm.s3.amazonaws.com/vagrant/boxes/opscode-centos-5.8.box
-  run_list:
-  - recipe[yum::epel]
+    box: precise-64-lxc-preseed
+    box_url: http://vagrant.hw-ops.com/precise-64-lxc-preseed.box
+#    box: precise-64
+#    box_url: https://github.com/downloads/chrisroberts/vagrant-boxes/precise-64.box
+#    box: opscode-ubuntu-12.04
+#    box_url: https://opscode-vm.s3.amazonaws.com/vagrant/boxes/opscode-ubuntu-12.04.box
 suites:
 - name: default
-  run_list: []
-  attributes: {}
+  run_list:
+  - recipe[lxc-test]
