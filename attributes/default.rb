@@ -37,3 +37,11 @@ default[:lxc][:mirror] = 'http://archive.ubuntu.com/ubuntu'
 default[:lxc][:containers] = {}
 
 default[:lxc][:deprecated][:delete_awesome_ephemerals] = true
+default[:lxc][:apparmor][:enable_nested_containers] = false
+
+# https://bugs.launchpad.net/ubuntu/+bug/1007439
+# https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/956051
+default[:lxc][:bugfix][:precise][:repo][:enabled] = false
+default[:lxc][:bugfix][:precise][:repo][:path] = '/usr/src/precise_lts_apt'
+default[:lxc][:bugfix][:precise][:repo][:exec] = '/usr/local/bin/precise_lts_apt_lxc'
+default[:lxc][:bugfix][:precise][:repo][:auto_enable_lwrp] = false

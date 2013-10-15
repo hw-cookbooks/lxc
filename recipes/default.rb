@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+include_recipe 'lxc::bugfix_precise_repo'
+
 dpkg_autostart 'lxc' do
   allow false
 end
@@ -95,6 +97,18 @@ chef_gem 'elecksee' do
     version node[:lxc][:elecksee][:version_restriction]
   end
   action node[:lxc][:elecksee][:action]
+end
+
+service 'lxc-apparmor' do
+  service_name 'apparmor'
+  action :nothing
+end
+
+file '/etc/apparmor.d/lxc/lxc-with-nesting' do
+  path 'lxc-nesting.apparmor'
+  mode 0644
+  action node[:lxc][:apparmor][:enable_nested_containers] ? :create : :delete
+  notifies :restart, 'service[lxc-apparmor]', :immediately
 end
 
 require 'elecksee/lxc'
