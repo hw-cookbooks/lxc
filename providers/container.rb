@@ -129,8 +129,21 @@ action :create do
   end
 
   #### Use cached chef package from host if available
+  VERSION_REGEXP = %r{(\d+\.\d+\.\d+(-\d+)?)}
   if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>1 > /dev/null'))
-    file_path = Dir.glob(::File.join('/opt', 'chef*.deb')).sort.last
+    file_path = Dir.glob(::File.join('/opt', 'chef*.deb')).sort do |x,y|
+      version_x = x.scan(VERSION_REGEXP).flatten.first
+      version_y = y.scan(VERSION_REGEXP).flatten.first
+      if(version_x.nil? && version_y.nil?)
+        0
+      elsif(version_x.nil?)
+        -1
+      elsif(version_y.nil?)
+        1
+      else
+        Gem::Version.new(version_x) <=> Gem::Version.new(version_y)
+      end
+    end
 
     execute "lxc copy_chef_full[#{new_resource.name}]" do
       command "cp #{file_path} #{_lxc.rootfs.join('opt')}"
