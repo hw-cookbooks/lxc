@@ -130,7 +130,7 @@ action :create do
 
   #### Use cached chef package from host if available
   VERSION_REGEXP = %r{(\d+\.\d+\.\d+(-\d+)?)}
-  if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>1 > /dev/null'))
+  if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>&1 > /dev/null'))
     file_path = Dir.glob(::File.join('/opt', 'chef*.deb')).sort do |x,y|
       version_x = x.scan(VERSION_REGEXP).flatten.first
       version_y = y.scan(VERSION_REGEXP).flatten.first
