@@ -76,7 +76,7 @@ report 'Adding release files' do
     Dir.chdir(d)
     con = %x{apt-ftparchive release .}
     File.open(File.join(d, 'Release'), 'w') do |file|
-      file.puts "Componenets: main\n#{con}\n"
+      file.puts "Components main\n#{con}\n"
     end
   end
 end
