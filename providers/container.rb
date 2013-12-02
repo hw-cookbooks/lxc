@@ -302,7 +302,7 @@ action :create do
     only_if do
       new_resource.chef_enabled &&
       new_resource.copy_data_bag_secret_file &&
-        ::File.exists?(new_resource.copy_data_bag_secret_file)
+        ::File.exists?(new_resource.data_bag_secret_file)
     end
   end
 
