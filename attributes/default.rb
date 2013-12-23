@@ -13,7 +13,7 @@ default[:lxc][:allowed_types] = %w(debian ubuntu fedora)
 default[:lxc][:container_directory] = '/var/lib/lxc'
 default[:lxc][:dnsmasq_lease_file] = '/var/lib/misc/dnsmasq.leases'
 
-default[:lxc][:elecksee][:version_restriction] = '~> 1.0.8'
+default[:lxc][:elecksee][:version_restriction] = '~> 1.0.18'
 default[:lxc][:elecksee][:action] = :install
 
 default[:lxc][:default_config][:lxc_auto] = node[:lxc][:auto_start]
