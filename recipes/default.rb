@@ -74,40 +74,14 @@ template '/etc/default/lxc' do
 end
 
 include_recipe 'lxc::install_dependencies'
-
-# install the server dependencies to run lxc
-node[:lxc][:packages].each do |lxcpkg|
-  package lxcpkg do
-    options '-o Dpkg::Options::="--force-confold"'
-  end
-end
-
-# use upstart on ubuntu > saucy
-service_provider = Chef::Provider::Service::Upstart if 'ubuntu' == node['platform'] &&
-  Chef::VersionConstraint.new('>= 13.10').include?(node['platform_version'])
-
-# this just reloads the dnsmasq rules when the template is adjusted
-service 'lxc-net' do
-  provider service_provider
-  action [:enable, :start]
-  subscribes :restart, resources("template[/etc/default/lxc]")
-end
-
-service 'lxc' do
-  provider service_provider
-  action [:enable, :start]
-end
+include_recipe 'lxc::package'
+include_recipe 'lxc::service'
 
 chef_gem 'elecksee' do
   if(node[:lxc][:elecksee][:version_restriction])
     version node[:lxc][:elecksee][:version_restriction]
   end
   action node[:lxc][:elecksee][:action]
-end
-
-service 'lxc-apparmor' do
-  service_name 'apparmor'
-  action :nothing
 end
 
 file '/etc/apparmor.d/lxc/lxc-with-nesting' do

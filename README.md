@@ -30,6 +30,14 @@ node['lxc']['containers']['example'] = {
 
 Install and manage containers via the knife-remotelxc plugin.
 
+### package
+
+Installs lxc packages
+
+### service
+
+Configures lxc services
+
 ## LWRPs
 
 ### lxc
