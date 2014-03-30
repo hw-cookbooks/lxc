@@ -1,3 +1,6 @@
+## v1.1.8
+* Bug fix release: Upgrades `elecksee` gem to 1.0.20 minimum (#45)
+
 ## v1.1.6
 * Fix data bag secret copy (thanks @jbianquetti)
 * Support upstart based services (thanks @bkw)
