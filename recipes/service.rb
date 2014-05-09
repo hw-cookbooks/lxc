@@ -6,7 +6,7 @@ service_provider = Chef::Provider::Service::Upstart if 'ubuntu' == node['platfor
 service 'lxc-net' do
   provider service_provider
   action [:enable, :start]
-  subscribes :restart, resources("template[/etc/default/lxc]")
+  subscribes :restart, 'file[/etc/default/lxc]'
 end
 
 service 'lxc' do
