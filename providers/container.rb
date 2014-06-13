@@ -216,7 +216,7 @@ action :create do
     only_if do
       _lxc.rootfs.join('etc/chef/first_run.json').exist? ||
         !new_resource.container_commands.empty? ||
-        (node.run_state[:lxc][:meta][new_resource.name][:new_container] && new_resource.initialize_commands)
+        (node.run_state[:lxc][:meta][new_resource.name][:new_container] && !new_resource.initialize_commands.empty?)
     end
   end
 
