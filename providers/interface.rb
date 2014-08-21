@@ -24,10 +24,10 @@ action :create do
   end
 
   net_set = Mash.new(:device => new_resource.device)
+  net_set[:auto] = new_resource.auto
   if(new_resource.dynamic)
     net_set[:dynamic] = true
   else
-    net_set[:auto] = new_resource.auto
     net_set[:address] = new_resource.address
     net_set[:gateway] = new_resource.gateway
     net_set[:netmask] = new_resource.netmask
