@@ -10,6 +10,9 @@ dpkg_autostart 'lxc-net' do
   allow false
 end
 
+include_recipe 'lxc::install_dependencies'
+include_recipe 'lxc::package'
+
 # Start at 0 and increment up if found
 unless(node[:network][:interfaces][:lxcbr0])
   max = node.network.interfaces.map do |int, info|
@@ -55,8 +58,6 @@ file '/etc/default/lxc' do
   mode 0644
 end
 
-include_recipe 'lxc::install_dependencies'
-include_recipe 'lxc::package'
 include_recipe 'lxc::service'
 
 chef_gem 'elecksee' do
