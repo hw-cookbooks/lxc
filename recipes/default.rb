@@ -71,6 +71,7 @@ file '/etc/apparmor.d/lxc/lxc-with-nesting' do
   mode 0644
   action node[:lxc][:apparmor][:enable_nested_containers] ? :create : :delete
   notifies :restart, 'service[lxc-apparmor]', :immediately
+  only_if{ node.platform == 'ubuntu' }
 end
 
 require 'elecksee/lxc'
