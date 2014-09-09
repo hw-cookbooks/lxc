@@ -2,6 +2,7 @@ file node[:lxc][:bugfix][:precise][:repo][:exec] do
   path 'lxc-precise-lts'
   mode 0755
   action node[:lxc][:bugfix][:precise][:repo][:enabled] ? :create : :delete
+  only_if{ node[:lxc][:bugfix][:precise][:repo][:enabled] }
 end
 
 confirm_file = File.join(node[:lxc][:bugfix][:precise][:repo][:path], 'confirm')
