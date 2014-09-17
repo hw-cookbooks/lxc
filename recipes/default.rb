@@ -25,11 +25,11 @@ unless(node[:network][:interfaces][:lxcbr0])
     end
   end.flatten.compact.max
 
-  node.default[:lxc][:network_device][:oct] = max ? max + 1 : 0
+  node.set[:lxc][:network_device][:oct] = max ? max + 1 : 0
 
   # Test for existing bridge. Use different subnet if found
   l_net = "10.0.#{node[:lxc][:network_device][:oct]}"
-  node.default[:lxc][:default_config][:lxc_addr] = "#{l_net}.1"
+  node.set[:lxc][:default_config][:lxc_addr] = "#{l_net}.1"
 end
 
 lxc_net_prefix = node[:lxc][:default_config][:lxc_addr].sub(%r{\.1$}, '')
@@ -58,6 +58,7 @@ file '/etc/default/lxc' do
   mode 0644
 end
 
+include_recipe 'lxc::rhel_bridge'
 include_recipe 'lxc::service'
 
 chef_gem 'elecksee' do

@@ -13,7 +13,7 @@ default[:lxc][:allowed_types] = %w(debian ubuntu fedora centos)
 default[:lxc][:container_directory] = '/var/lib/lxc'
 default[:lxc][:dnsmasq_lease_file] = '/var/lib/misc/dnsmasq.leases'
 
-default[:lxc][:proxy][:enable] = true
+default[:lxc][:proxy][:enable] = false
 
 default[:lxc][:elecksee][:version_restriction] = '~> 1.0.20'
 default[:lxc][:elecksee][:action] = :install
@@ -34,7 +34,7 @@ default[:lxc][:knife][:static_ips] = []
 
 default[:lxc][:user_locks] = %w(ubuntu)
 
-default[:lxc][:packages] = node.platform_family?('rhel') ? ['lxc', 'lxc-templates'] : ['lxc']
+default[:lxc][:packages] = node.platform_family?('rhel') ? ['lxc', 'lxc-templates', 'lxc-libs', 'bridge-utils', 'libcgroup'] : ['lxc']
 default[:lxc][:mirror] = 'http://archive.ubuntu.com/ubuntu'
 default[:lxc][:containers] = {}
 
