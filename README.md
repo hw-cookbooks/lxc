@@ -2,6 +2,12 @@
 
 Manage linux containers with Chef.
 
+## Note
+
+Test this cookbook before applying to existing nodes. Lots of updates
+have been applied, and some tooling has been replaced. Also, rhel is
+working in a pretty hacky way, so use at your own risk. YOLO!
+
 ## Recipes
 
 ### default
@@ -20,7 +26,7 @@ This recipe creates all of the containers defined in the `['lxc']['containers']`
 hash. Here is an example of an `example` container:
 
 ```ruby
-node['lxc']['containers']['example'] = { 
+node['lxc']['containers']['example'] = {
   'template' => 'ubuntu',
   'initialize_commands' => ['apt-get update']
 }
