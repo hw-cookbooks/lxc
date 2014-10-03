@@ -58,7 +58,10 @@ file '/etc/default/lxc' do
   mode 0644
 end
 
-include_recipe 'lxc::rhel_bridge'
+if(node.platform_family?(:rhel))
+  include_recipe 'lxc::rhel_bridge'
+end
+
 include_recipe 'lxc::service'
 
 chef_gem 'elecksee' do
