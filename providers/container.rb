@@ -225,7 +225,7 @@ action :create do
     block do
       new_resource.initialize_commands.each do |cmd|
         Chef::Log.info "Running command on #{new_resource.name}: #{cmd}"
-        _lxc.container_command(cmd, 2)
+        _lxc.container_command(cmd, 5)
       end
     end
     only_if do
