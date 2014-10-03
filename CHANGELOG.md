@@ -1,3 +1,12 @@
+## v2.0.0
+* Remove apt-cacher. Use polipo.
+* Update network configurations
+* Remove dpkg options on package install
+* Only use apparmor helper on ubuntu
+* Set auto on all interfaces
+* Fix up container setup command checks
+* Set up hacky support on RHEL family (still needs cleanup)
+
 ## v1.1.8
 * Bug fix release: Upgrades `elecksee` gem to 1.0.20 minimum (#45)
 
