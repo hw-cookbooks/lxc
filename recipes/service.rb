@@ -8,6 +8,7 @@ service 'lxc-net' do
   action [:enable, :start]
   subscribes :restart, 'file[/etc/default/lxc]'
   only_if{ node.platform_family?('debian') }
+  supports [:restart, :status]
 end
 
 service 'lxc' do
