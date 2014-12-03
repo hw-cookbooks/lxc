@@ -206,7 +206,7 @@ action :create do
         end
       end
     end
-#    not_if "grep 'root:\*' #{_lxc.rootfs.join('etc/shadow').to_path}"
+    not_if "grep 'root:\*' #{_lxc.rootfs.join('etc/shadow').to_path}"
   end
 
   ruby_block "lxc start[#{new_resource.name}]" do
