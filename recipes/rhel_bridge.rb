@@ -22,6 +22,7 @@ file "/etc/sysconfig/network-scripts/ifcfg-#{bridge_name}" do
       :bootproto => 'static',
       :ipaddr => node[:lxc][:addr],
       :netmask => node[:lxc][:netmask],
+      :nm_managed => node[:lxc][:nm_managed]
     }.map do |k,v|
       "#{k.to_s.upcase}=#{v.inspect}"
     end.join("\n")
