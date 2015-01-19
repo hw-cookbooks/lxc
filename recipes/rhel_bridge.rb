@@ -7,29 +7,31 @@ service 'cgred' do
   action [:enable, :start]
 end
 
-execute 'create lxcbr0' do
-  command 'brctl addbr lxcbr0'
-  not_if 'brctl showmacs lxcbr0'
+bridge_name = node[:lxc][:bridge]
+
+execute "create #{bridge_name}" do
+  command "brctl addbr #{bridge_name}"
+  not_if "brctl showmacs #{bridge_name}"
 end
 
-file '/etc/sysconfig/network-scripts/ifcfg-lxcbr0' do
+file "/etc/sysconfig/network-scripts/ifcfg-#{bridge_name}" do
   content lazy{
     {
-      :device => 'lxcbr0',
+      :device => bridge_name,
       :type => 'Bridge',
       :bootproto => 'static',
-      :ipaddr => node[:lxc][:default_config][:lxc_addr],
-      :netmask => '255.255.255.0'
+      :ipaddr => node[:lxc][:addr],
+      :netmask => node[:lxc][:netmask],
     }.map do |k,v|
       "#{k.to_s.upcase}=#{v.inspect}"
     end.join("\n")
   }
   mode 0644
-  notifies :run, 'execute[enable lxcbr0]', :immediately
+  notifies :run, "execute[enable #{bridge_name}]", :immediately
 end
 
-execute 'enable lxcbr0' do
-  command 'ifup lxcbr0'
+execute "enable #{bridge_name}" do
+  command "ifup #{bridge_name}"
   action :nothing
 end
 
@@ -52,7 +54,7 @@ file '/etc/sysconfig/iptables' do
     ':PREROUTING ACCEPT [0:0]',
     ':OUTPUT ACCEPT [0:0]',
     ':POSTROUTING ACCEPT [0:0]',
-    "-A POSTROUTING -s #{node[:lxc][:default_config][:lxc_network]} ! -d #{node[:lxc][:default_config][:lxc_network]} -j MASQUERADE",
+    "-A POSTROUTING -s #{node[:lxc][:network]} ! -d #{node[:lxc][:network]} -j MASQUERADE",
     'COMMIT',
     ''
   ].join("\n")
@@ -94,11 +96,11 @@ package 'dnsmasq'
 file '/etc/dnsmasq.conf' do
   content lazy{
     {
-      'listen-address' => node[:lxc][:default_config][:lxc_addr],
-      'interface' => 'lxcbr0',
+      'listen-address' => node[:lxc][:addr],
+      'interface' => bridge_name,
       'except-interface' => 'lo',
       'bind-interfaces' => true,
-      'dhcp-range' => "#{node[:lxc][:default_config][:lxc_dhcp_range]}"
+      'dhcp-range' => "#{node[:lxc][:dhcp_range]}"
     }.map do |k,v|
       if(v == true)
         k
@@ -118,7 +120,7 @@ end
 file '/etc/lxc/default.conf' do
   content [
     'lxc.network.type = veth',
-    'lxc.network.link = lxcbr0',
+    "lxc.network.link = #{bridge_name}",
     'lxc.network.flags = up',
     ''
   ].join("\n")
