@@ -263,6 +263,15 @@ action :create do
     only_if{ new_resource.chef_enabled }
   end
 
+  log_directory = ::File.dirname(new_resource.chef_log_location)
+
+  directory @lxc.rootfs.join(log_directory).to_path do
+    action :create
+    recursive true
+    mode 0755
+    only_if{ new_resource.chef_enabled }
+  end
+
   template "lxc chef-config[#{new_resource.name}]" do
     source 'client.rb.erb'
     cookbook 'lxc'
@@ -271,7 +280,8 @@ action :create do
       :validation_client => new_resource.validation_client || Chef::Config[:validation_client_name],
       :node_name => new_resource.node_name || "#{node.name}-#{new_resource.name}",
       :server_uri => new_resource.server_uri || Chef::Config[:chef_server_url],
-      :chef_environment => new_resource.chef_environment || '_default'
+      :chef_environment => new_resource.chef_environment || '_default',
+      :chef_log_location => new_resource.chef_log_location
     )
     mode 0644
     only_if{ new_resource.chef_enabled }
