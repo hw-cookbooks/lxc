@@ -13,7 +13,6 @@ container_name = 'test-container'
 lxc_container container_name do
   action :create
   chef_enabled true
-  # chef_environment 'development'
   chef_log_location '/var/log/chef/chef-client.log'
   run_list [ ]
   node_name container_name
