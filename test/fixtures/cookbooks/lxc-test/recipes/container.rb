@@ -3,8 +3,9 @@ include_recipe 'lxc::default'
 
 # Mocking a chef server inside the lxc host so 
 # chef-client inside the container can "register" into the server
-execute "chef-zero" do
-  command "/opt/chef/bin/chef-zero -H 10.0.3.1 -p 8889 -d"
+
+execute 'run chef-zero' do
+  command '/opt/chef/embedded/bin/chef-zero --host 10.0.3.1 --port 8889 --daemon'
   action :run
 end
 
@@ -14,6 +15,7 @@ lxc_container container_name do
   action :create
   chef_enabled true
   chef_log_location '/var/log/chef/chef-client.log'
+  chef_client_version '11.18.6'
   run_list [ ]
   node_name container_name
   validation_client 'chef-validator'
@@ -39,4 +41,3 @@ lxc_container container_name do
     mount_entry '/sys/fs/pstore sys/fs/pstore none bind,optional 0 0'
   end
 end
-
