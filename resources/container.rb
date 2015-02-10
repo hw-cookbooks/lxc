@@ -10,6 +10,9 @@ attribute :validation_client, :kind_of => String
 attribute :validator_pem, :kind_of => String, :default => nil
 attribute :server_uri, :kind_of => String
 attribute :chef_environment, :kind_of => String, :default => '_default'
+attribute :chef_log_location, :kind_of => String, :default => '/var/log/chef-client.log'
+attribute :chef_client_version, :kind_of => String, :default => nil
+attribute :chef_client_config_cookbook, :kind_of => String, :default => 'lxc'
 attribute :node_name, :kind_of => String
 attribute :run_list, :kind_of => Array
 attribute :chef_enabled, :kind_of => [TrueClass, FalseClass], :default => false
