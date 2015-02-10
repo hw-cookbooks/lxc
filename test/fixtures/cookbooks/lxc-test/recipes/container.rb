@@ -5,7 +5,7 @@ include_recipe 'lxc::default'
 # chef-client inside the container can "register" into the server
 
 execute 'run chef-zero' do
-  command '/opt/chef/embedded/bin/chef-zero --host 10.0.3.1 --port 8889 --daemon'
+  command '/opt/chef/bin/chef-zero --host 10.0.3.1 --port 8889 --daemon'
   action :run
 end
 
