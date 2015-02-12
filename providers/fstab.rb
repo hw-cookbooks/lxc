@@ -22,7 +22,7 @@ action :create do
       recursive true
     end
   end
-  
+
   unless(node.run_state[:lxc][:fstabs][new_resource.container].include?(line))
     node.run_state[:lxc][:fstabs][new_resource.container] << line
   end
