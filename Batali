@@ -1,0 +1,8 @@
+Batali.define do
+  source 'https://supermarket.chef.io'
+  cookbook 'apt'
+  cookbook 'yum-epel'
+  cookbook 'lxc-test', path: './test/fixtures/cookbooks/lxc-test'
+
+  metadata
+end
