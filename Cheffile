@@ -1,0 +1,4 @@
+site 'http://community.opscode.com/api/v1'
+
+cookbook 'lxc', path: './'
+cookbook 'lxc-test', path: './test/fixtures/cookbooks/lxc-test'
