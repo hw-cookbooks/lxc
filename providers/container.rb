@@ -232,6 +232,7 @@ action :create do
       node.run_state[:lxc][:meta][new_resource.name][:new_container] &&
         !new_resource.initialize_commands.empty?
     end
+    retries 5
   end
 
   # Make sure we have chef in the container
@@ -244,7 +245,7 @@ action :create do
     end
   end
 
-  chef_install_command = new_resource.chef_client_version ? 
+  chef_install_command = new_resource.chef_client_version ?
     "bash /opt/chef-install.sh -v #{new_resource.chef_client_version}" : "bash /opt/chef-install.sh"
 
   ruby_block "lxc install_chef[#{new_resource.name}]" do
