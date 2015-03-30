@@ -1,3 +1,4 @@
+batali.manifest
 .*
 !.gitignore
 *.lock
