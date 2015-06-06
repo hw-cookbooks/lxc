@@ -1,5 +1,5 @@
-command 'enable lxc-daily ppa' do
-  execute 'apt-add-repository ppa:ubuntu-lxc/daily -y'
+execute 'enable lxc-daily ppa' do
+  command 'apt-add-repository ppa:ubuntu-lxc/daily -y'
   only_if do
     node.platform_family?('debian') &&
       node[:lxc][:enable_daily_ppa]
@@ -7,8 +7,8 @@ command 'enable lxc-daily ppa' do
   not_if 'grep -R "^deb.*ppa.*lxc.daily" sources.list*'
 end
 
-command 'ppa update' do
-  execute 'apt-get update'
+execute 'ppa update' do
+  command 'apt-get update'
   action :nothing
   subscribes :run, 'command[enable lxc-daily ppa]', :immediately
 end
