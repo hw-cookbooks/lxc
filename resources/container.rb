@@ -23,8 +23,8 @@ attribute :default_bridge, :kind_of => String
 attribute :static_ip, :kind_of => String
 attribute :static_netmask, :kind_of => String, :default => '255.255.255.0'
 attribute :static_gateway, :kind_of => String
-attribute :default_config, :kind_of => [TrueClass, FalseClass], :default => true
-attribute :default_fstab, :kind_of => [TrueClass, FalseClass], :default => false
+attribute :default_config, :kind_of => [TrueClass, FalseClass]
+attribute :default_fstab, :kind_of => [TrueClass, FalseClass]
 attribute :container_commands, :kind_of => Array, :default => []
 attribute :initialize_commands, :kind_of => Array, :default => []
 attribute :clone, :kind_of => String

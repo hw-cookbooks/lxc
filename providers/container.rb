@@ -14,6 +14,14 @@ def load_current_resource
   if(new_resource.static_ip && new_resource.static_gateway.nil?)
     raise "Static gateway must be defined when static IP is provided (Container: #{new_resource.name})"
   end
+
+  if(new_resource.default_config.nil?)
+    new_resource.default_config node[:lxc][:default_config_enabled]
+  end
+  if(new_resource.default_fstab.nil?)
+    new_resource.default_fstab node[:lxc][:default_fstab_enabled]
+  end
+
   new_resource.default_bridge node[:lxc][:bridge] unless new_resource.default_bridge
   node.run_state[:lxc] ||= Mash.new
   node.run_state[:lxc][:meta] ||= Mash.new
@@ -49,14 +57,6 @@ action :create do
     end
   end
 
-  #### Create container configuration bits
-  if(new_resource.default_config)
-    lxc_config new_resource.name do
-      action :create
-      default_bridge new_resource.default_bridge
-    end
-  end
-
   if(new_resource.default_fstab)
     lxc_fstab "proc[#{new_resource.name}]" do
       container new_resource.name
@@ -72,6 +72,14 @@ action :create do
       mount_point 'sys'
       type 'sysfs'
       options 'default'
+    end
+  end
+
+  #### Create container configuration bits
+  if(new_resource.default_config)
+    lxc_config new_resource.name do
+      action :create
+      default_bridge new_resource.default_bridge
     end
   end
 
