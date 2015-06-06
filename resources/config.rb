@@ -18,3 +18,4 @@ attribute :mount_entry, :kind_of => String
 attribute :rootfs, :kind_of => [String,Pathname]
 attribute :rootfs_mount, :kind_of => String
 attribute :pivotdir, :kind_of => String
+attribute :include, :kind_of => String, :default => '/usr/share/lxc/config/common.conf'

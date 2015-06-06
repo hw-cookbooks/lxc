@@ -15,7 +15,7 @@ def load_current_resource
   new_resource.rootfs @lxc.rootfs.to_path unless new_resource.rootfs
 
   new_resource.default_bridge node[:lxc][:bridge] unless new_resource.default_bridge
-  new_resource.mount @lxc.path.join('fstab').to_path unless new_resource.mount
+  new_resource.mount @lxc.path.join('fstab').to_path unless new_resource.mount || !::File.exists?(@lxc.path.join('fstab'))
   config = ::Lxc::FileConfig.new(@lxc.container_config)
   if((new_resource.network.nil? || new_resource.network.empty?))
     if(config.network.empty?)
@@ -38,32 +38,6 @@ def load_current_resource
       end
     end
   end
-  new_resource.cgroup(
-    Chef::Mixin::DeepMerge.merge(
-      Mash.new(
-        'devices.deny' => 'a',
-        'devices.allow' => [
-          'c *:* m',
-          'b *:* m',
-          'c 1:3 rwm',
-          'c 1:5 rwm',
-          'c 5:1 rwm',
-          'c 5:0 rwm',
-          'c 1:9 rwm',
-          'c 1:8 rwm',
-          'c 136:* rwm',
-          'c 5:2 rwm',
-          'c 254:0 rwm',
-          'c 10:229 rwm',
-          'c 10:200 rwm',
-          'c 1:7 rwm',
-          'c 10:228 rwm',
-          'c 10:232 rwm'
-        ]
-      ),
-      new_resource.cgroup
-    )
-  )
 end
 
 action :create do
