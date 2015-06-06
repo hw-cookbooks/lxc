@@ -18,6 +18,9 @@ default[:lxc][:proxy][:enable] = false
 default[:lxc][:elecksee][:version_restriction] = '~> 1.1.2'
 default[:lxc][:elecksee][:action] = :install
 
+default[:lxc][:default_config_enabled] = true
+default[:lxc][:default_fstab_enabled] = true
+
 default[:lxc][:default_config][:lxc_auto] = node[:lxc][:auto_start]
 default[:lxc][:default_config][:use_lxc_bridge] = node[:lxc][:use_bridge]
 default[:lxc][:default_config][:lxc_bridge] = node[:lxc][:bridge]
@@ -34,6 +37,7 @@ default[:lxc][:knife][:static_ips] = []
 
 default[:lxc][:user_locks] = %w(ubuntu)
 
+default[:lxc][:enable_daily_ppa] = false
 default[:lxc][:packages] = node.platform_family?('rhel') ? ['lxc', 'lxc-templates', 'lxc-libs', 'bridge-utils', 'libcgroup'] : ['lxc']
 default[:lxc][:mirror] = 'http://archive.ubuntu.com/ubuntu'
 default[:lxc][:containers] = {}
