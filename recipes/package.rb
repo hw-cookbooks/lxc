@@ -15,5 +15,7 @@ end
 
 # install the server dependencies to run lxc
 node[:lxc][:packages].each do |lxcpkg|
-  package lxcpkg
+  package lxcpkg do
+    subscribes :upgrade, 'execute[ppa update]', :immediately
+  end
 end
