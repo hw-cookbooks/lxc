@@ -10,7 +10,7 @@ end
 execute 'ppa update' do
   command 'apt-get update'
   action :nothing
-  subscribes :run, 'command[enable lxc-daily ppa]', :immediately
+  subscribes :run, 'execute[enable lxc-daily ppa]', :immediately
 end
 
 # install the server dependencies to run lxc
