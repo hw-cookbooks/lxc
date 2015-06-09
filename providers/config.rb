@@ -15,7 +15,7 @@ def load_current_resource
   new_resource.rootfs @lxc.rootfs.to_path unless new_resource.rootfs
 
   new_resource.default_bridge node[:lxc][:bridge] unless new_resource.default_bridge
-  new_resource.mount @lxc.path.join('fstab').to_path unless new_resource.mount || !::File.exists?(@lxc.path.join('fstab'))
+  new_resource.mount @lxc.path.join('fstab').to_path unless new_resource.mount
   config = ::Lxc::FileConfig.new(@lxc.container_config)
   if((new_resource.network.nil? || new_resource.network.empty?))
     if(config.network.empty?)
@@ -45,6 +45,13 @@ action :create do
 
   directory @lxc.path.to_path do
     action :create
+  end
+
+  file new_resource.mount do
+    action :create
+    only_if do
+      new_resource.mount == @lxc.path.join('fstab') &&
+        !::File.exists?(@lxc.path.join('fstab')
   end
 
   file "lxc update_config[#{new_resource.utsname}]" do
