@@ -49,10 +49,6 @@ action :create do
 
   file new_resource.mount do
     action :create
-    only_if do
-      new_resource.mount == @lxc.path.join('fstab') &&
-        !::File.exists?(@lxc.path.join('fstab'))
-    end
   end
 
   file "lxc update_config[#{new_resource.utsname}]" do
