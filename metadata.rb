@@ -4,7 +4,7 @@ maintainer_email 'chris@hw-ops.com'
 license          'Apache 2.0'
 description      'Chef driven Linux Containers'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version          '99.0.2'
+version          '99.0.3'
 
 suggests 'omnibus_updater'
 suggests 'bridger'
