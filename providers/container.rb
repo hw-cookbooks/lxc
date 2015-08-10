@@ -137,7 +137,10 @@ action :create do
   end
 
   #### Use cached chef package from host if available
-  VERSION_REGEXP = %r{(\d+\.\d+\.\d+(-\d+)?)}
+  unless(defined?(VERSION_REGEXP))
+    VERSION_REGEXP = %r{(\d+\.\d+\.\d+(-\d+)?)}
+  end
+
   if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>&1 > /dev/null'))
     file_path = Dir.glob(::File.join('/opt', 'chef*.deb')).sort do |x,y|
       version_x = x.scan(VERSION_REGEXP).flatten.first
@@ -219,7 +222,18 @@ action :create do
 
   ruby_block "lxc start[#{new_resource.name}]" do
     block do
-      _lxc.start
+      begin
+        Timeout::timeout(10) do
+          `lxc-start -n #{new_resource.name} -d`
+#          _lxc.start
+          _lxc.container_ip(10)
+        end
+      rescue Timeout::Error
+        `lxc-stop -n #{_lxc.name} --kill`
+#        _lxc.stop
+        sleep(1)
+        retry
+      end
     end
     only_if do
       _lxc.rootfs.join('etc/chef/first_run.json').exist? ||
