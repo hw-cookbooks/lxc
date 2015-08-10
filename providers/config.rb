@@ -3,19 +3,19 @@ require 'securerandom'
 def load_current_resource
 
   if(new_resource.container)
-    new_resource.utsname new_resource.container
+    new_resource.struct.lxc.utsname new_resource.container
   end
-  unless(new_resource.struct[:utsname])
-    new_resource.utsname new_resource.name
+  unless(new_resource.struct[:lxc] && new_resource.struct[:lxc][:utsname])
+    new_resource.struct.lxc.utsname new_resource.name
   end
 
   @lxc = ::Lxc.new(
-    new_resource.utsname,
+    new_resource.struct.lxc.utsname,
     :base_dir => node[:lxc][:container_directory],
     :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
   )
 
-  @config = ::Lxc::ConfigFile.new(@lxc.container_config.to_path)
+  @config = ::Lxc::FileConfig.new(@lxc.container_config.to_path)
 end
 
 action :create do
@@ -26,18 +26,12 @@ action :create do
     action :create
   end
 
-  if(new_resource[:mount])
-    file new_resource.mount do
-      action :create
-    end
-  end
-
   if(new_resource.resource_style.to_s == 'merge')
     if(node[:lxc][:original_configs].nil?)
-      node.set[:lxc][:original_configs] = []
-      if(node[:lxc][:original_configs][new_resource.name].nil?)
-        node.set[:lxc][:original_configs][new_resource.name] = _config.state_hash
-      end
+      node.set[:lxc][:original_configs] = {}
+    end
+    if(node[:lxc][:original_configs][new_resource.name].nil?)
+      node.set[:lxc][:original_configs][new_resource.name] = _config.state_hash
     end
     _config.state._merge!(new_resource.struct)
   else
