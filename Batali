@@ -2,6 +2,7 @@ Batali.define do
   source 'https://supermarket.chef.io'
   cookbook 'apt'
   cookbook 'yum-epel'
+  cookbook 'vagabond', git: 'git://github.com/chrisroberts/chef-vagabond', :ref => 'develop'
   cookbook 'lxc-test', path: './test/fixtures/cookbooks/lxc-test'
 
   metadata
