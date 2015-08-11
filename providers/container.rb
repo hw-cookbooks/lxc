@@ -108,10 +108,6 @@ action :create do
     source 'fstab.erb'
     cookbook 'lxc'
     variables :container => new_resource.name
-    only_if do
-      node.run_state[:lxc][:fstabs] &&
-        node.run_state[:lxc][:fstabs][new_resource.name]
-    end
     mode 0644
   end
 
@@ -222,18 +218,7 @@ action :create do
 
   ruby_block "lxc start[#{new_resource.name}]" do
     block do
-      begin
-        Timeout::timeout(10) do
-          `lxc-start -n #{new_resource.name} -d`
-#          _lxc.start
-          _lxc.container_ip(10)
-        end
-      rescue Timeout::Error
-        `lxc-stop -n #{_lxc.name} --kill`
-#        _lxc.stop
-        sleep(1)
-        retry
-      end
+      _lxc.start
     end
     only_if do
       _lxc.rootfs.join('etc/chef/first_run.json').exist? ||
@@ -243,18 +228,17 @@ action :create do
   end
 
   #### Have initialize commands for the container? Run them now
-  ruby_block "lxc initialize_commands[#{new_resource.name}]" do
-    block do
-      new_resource.initialize_commands.each do |cmd|
+  new_resource.initialize_commands.each do |cmd|
+    ruby_block "lxc initialize_command[#{new_resource.name}:#{cmd}]" do
+      block do
         Chef::Log.info "Running command on #{new_resource.name}: #{cmd}"
         _lxc.container_command(cmd, 5)
       end
+      only_if do
+        node.run_state[:lxc][:meta][new_resource.name][:new_container]
+      end
+      retries 5
     end
-    only_if do
-      node.run_state[:lxc][:meta][new_resource.name][:new_container] &&
-        !new_resource.initialize_commands.empty?
-    end
-    retries 5
   end
 
   # Make sure we have chef in the container
