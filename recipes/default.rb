@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 include_recipe 'lxc::bugfix_precise_repo'
+include_recipe 'chef-sugar::default'
 
 dpkg_autostart 'lxc' do
   allow false
