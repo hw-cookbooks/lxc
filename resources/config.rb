@@ -18,8 +18,5 @@ attribute :mount_entry, :kind_of => String
 attribute :rootfs, :kind_of => [String,Pathname]
 attribute :rootfs_mount, :kind_of => String
 attribute :pivotdir, :kind_of => String
-
-if ubuntu_after_or_at_trusty?
-  attribute :start_auto, :kind_of => Numeric, :default => 1
-  attribute :start_delay, :kind_of => Numeric, :default => 5
-end
+attribute :start_auto, :kind_of => Numeric, :default => 1
+attribute :start_delay, :kind_of => Numeric, :default => 5
