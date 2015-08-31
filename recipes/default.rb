@@ -68,6 +68,9 @@ chef_gem 'elecksee' do
   if(node[:lxc][:elecksee][:version_restriction])
     version node[:lxc][:elecksee][:version_restriction]
   end
+  if(node[:lxc][:elecksee][:source])
+    source node[:lxc][:elecksee][:source]
+  end
   action node[:lxc][:elecksee][:action]
 end
 

@@ -18,3 +18,8 @@ attribute :mount_entry, :kind_of => String
 attribute :rootfs, :kind_of => [String,Pathname]
 attribute :rootfs_mount, :kind_of => String
 attribute :pivotdir, :kind_of => String
+
+if node[:platform_version] == '14.04'
+  attribute :start_auto, :kind_of => Numeric, :default => 1
+  attribute :start_delay, :kind_of => Numeric, :default => 5
+end
