@@ -8,6 +8,7 @@ end
 
 dpkg_autostart 'lxc-net' do
   allow false
+  only_if{ node.platform_family?('debian') and File.exist?("/etc/default/lxc-net") }
 end
 
 include_recipe 'lxc::install_dependencies'
