@@ -1,81 +1,59 @@
 require 'securerandom'
 
 def load_current_resource
-  require 'elecksee/lxc_file_config'
 
-  new_resource.utsname new_resource.container if new_resource.container
-  new_resource.utsname new_resource.name unless new_resource.utsname
+  if(new_resource.container)
+    new_resource.struct.lxc.utsname new_resource.container
+  end
+  unless(new_resource.struct[:lxc] && new_resource.struct[:lxc][:utsname])
+    new_resource.struct.lxc.utsname new_resource.name
+  end
 
   @lxc = ::Lxc.new(
-    new_resource.utsname,
+    new_resource.struct.lxc.utsname,
     :base_dir => node[:lxc][:container_directory],
     :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
   )
 
-  new_resource.rootfs @lxc.rootfs.to_path unless new_resource.rootfs
-
-  new_resource.default_bridge node[:lxc][:bridge] unless new_resource.default_bridge
-  new_resource.mount @lxc.path.join('fstab').to_path unless new_resource.mount
-  config = ::Lxc::FileConfig.new(@lxc.container_config)
-  if((new_resource.network.nil? || new_resource.network.empty?))
-    if(config.network.empty?)
-      default_net = {
-        :type => :veth,
-        :link => new_resource.default_bridge,
-        :flags => :up,
-        :hwaddr => "00:16:3e#{SecureRandom.hex(3).gsub(/(..)/, ':\1')}"
-      }
-    else
-      default_net = config.network.first
-      default_net.delete(:ipv4) if default_net.has_key?(:ipv4)
-      default_net.merge!(:link => new_resource.default_bridge)
-    end
-    new_resource.network(default_net)
-  else
-    [new_resource.network].flatten.each_with_index do |net_hash, idx|
-      if(config.network[idx].nil? || config.network[idx][:hwaddr].nil?)
-        net_hash[:hwaddr] ||= "00:16:3e#{SecureRandom.hex(3).gsub(/(..)/, ':\1')}"
-      end
-    end
-  end
-  new_resource.cgroup(
-    Chef::Mixin::DeepMerge.merge(
-      Mash.new(
-        'devices.deny' => 'a',
-        'devices.allow' => [
-          'c *:* m',
-          'b *:* m',
-          'c 1:3 rwm',
-          'c 1:5 rwm',
-          'c 5:1 rwm',
-          'c 5:0 rwm',
-          'c 1:9 rwm',
-          'c 1:8 rwm',
-          'c 136:* rwm',
-          'c 5:2 rwm',
-          'c 254:0 rwm',
-          'c 10:229 rwm',
-          'c 10:200 rwm',
-          'c 1:7 rwm',
-          'c 10:228 rwm',
-          'c 10:232 rwm'
-        ]
-      ),
-      new_resource.cgroup
-    )
-  )
+  @config = ::Lxc::FileConfig.new(@lxc.container_config.to_path)
 end
 
 action :create do
   _lxc = @lxc
+  _config = @config
 
   directory @lxc.path.to_path do
     action :create
   end
 
+  if(new_resource.resource_style.to_s == 'merge')
+    if(node[:lxc][:original_configs].nil?)
+      node.set[:lxc][:original_configs] = {}
+    end
+    if(node[:lxc][:original_configs][new_resource.name].nil?)
+      node.set[:lxc][:original_configs][new_resource.name] = _config.state_hash
+    end
+    _config.state._merge!(new_resource.struct)
+  else
+    _config.state = new_resource.struct
+  end
+
   file "lxc update_config[#{new_resource.utsname}]" do
     path _lxc.container_config.to_path
-    content ::Lxc::FileConfig.generate_config(new_resource)
+    content _config.generate_content
     mode 0644
+  end
+end
+
+action :delete do
+  _lxc = @lxc
+
+  if(node[:lxc][:original_configs] && node[:lxc][:original_configs][new_resource.name])
+    node.set[:lxc][:original_configs][new_resource.name] = nil
+  end
+
+  file "lxc delete_config[#{new_resource.name}]" do
+    path _lxc.container_config.to_path
+    action :delete
   end
 end

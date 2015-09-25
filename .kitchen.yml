@@ -12,8 +12,28 @@ suites:
   provisioner:
     name: chef_solo
   run_list:
-    - 'recipe[lxc-test::default]'
+    - 'recipe[vagabond]'
   attributes:
+    lxc:
+      enable_daily_ppa: true
+    vagabond:
+      bases:
+        centos_5:
+          enabled: false
+        centos_6:
+          enabled: true
+        centos_7:
+          enabled: true
+        ubuntu_1204:
+          enabled: true
+        ubuntu_1404:
+          enabled: true
+        debian_6:
+          enabled: true
+        debian_7:
+          enabled: true
+        debian_8:
+          enabled: true
 - name: test-container
   provisioner:
     name: chef_zero

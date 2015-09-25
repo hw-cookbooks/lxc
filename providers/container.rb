@@ -14,6 +14,14 @@ def load_current_resource
   if(new_resource.static_ip && new_resource.static_gateway.nil?)
     raise "Static gateway must be defined when static IP is provided (Container: #{new_resource.name})"
   end
+
+  if(new_resource.default_config.nil?)
+    new_resource.default_config node[:lxc][:default_config_enabled]
+  end
+  if(new_resource.default_fstab.nil?)
+    new_resource.default_fstab node[:lxc][:default_fstab_enabled]
+  end
+
   new_resource.default_bridge node[:lxc][:bridge] unless new_resource.default_bridge
   node.run_state[:lxc] ||= Mash.new
   node.run_state[:lxc][:meta] ||= Mash.new
@@ -49,14 +57,6 @@ action :create do
     end
   end
 
-  #### Create container configuration bits
-  if(new_resource.default_config)
-    lxc_config new_resource.name do
-      action :create
-      default_bridge new_resource.default_bridge
-    end
-  end
-
   if(new_resource.default_fstab)
     lxc_fstab "proc[#{new_resource.name}]" do
       container new_resource.name
@@ -72,6 +72,14 @@ action :create do
       mount_point 'sys'
       type 'sysfs'
       options 'default'
+    end
+  end
+
+  #### Create container configuration bits
+  if(new_resource.default_config)
+    lxc_config new_resource.name do
+      action :create
+      default_bridge new_resource.default_bridge
     end
   end
 
@@ -100,10 +108,6 @@ action :create do
     source 'fstab.erb'
     cookbook 'lxc'
     variables :container => new_resource.name
-    only_if do
-      node.run_state[:lxc][:fstabs] &&
-        node.run_state[:lxc][:fstabs][new_resource.name]
-    end
     mode 0644
   end
 
@@ -129,7 +133,10 @@ action :create do
   end
 
   #### Use cached chef package from host if available
-  VERSION_REGEXP = %r{(\d+\.\d+\.\d+(-\d+)?)}
+  unless(defined?(VERSION_REGEXP))
+    VERSION_REGEXP = %r{(\d+\.\d+\.\d+(-\d+)?)}
+  end
+
   if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>&1 > /dev/null'))
     file_path = Dir.glob(::File.join('/opt', 'chef*.deb')).sort do |x,y|
       version_x = x.scan(VERSION_REGEXP).flatten.first
@@ -221,18 +228,17 @@ action :create do
   end
 
   #### Have initialize commands for the container? Run them now
-  ruby_block "lxc initialize_commands[#{new_resource.name}]" do
-    block do
-      new_resource.initialize_commands.each do |cmd|
+  new_resource.initialize_commands.each do |cmd|
+    ruby_block "lxc initialize_command[#{new_resource.name}:#{cmd}]" do
+      block do
         Chef::Log.info "Running command on #{new_resource.name}: #{cmd}"
         _lxc.container_command(cmd, 5)
       end
+      only_if do
+        node.run_state[:lxc][:meta][new_resource.name][:new_container]
+      end
+      retries 5
     end
-    only_if do
-      node.run_state[:lxc][:meta][new_resource.name][:new_container] &&
-        !new_resource.initialize_commands.empty?
-    end
-    retries 5
   end
 
   # Make sure we have chef in the container
