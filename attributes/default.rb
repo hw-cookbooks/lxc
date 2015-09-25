@@ -15,7 +15,7 @@ default[:lxc][:dnsmasq_lease_file] = '/var/lib/misc/dnsmasq.leases'
 
 default[:lxc][:proxy][:enable] = false
 
-default[:lxc][:elecksee][:version_restriction] = '~> 1.1.2'
+default[:lxc][:elecksee][:version_restriction] = '~> 2.0.2'
 default[:lxc][:elecksee][:action] = :install
 
 default[:lxc][:default_config_enabled] = true
