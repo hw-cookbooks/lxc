@@ -2,7 +2,7 @@ require 'securerandom'
 
 def load_current_resource
   require 'elecksee/lxc_file_config'
-  
+
   new_resource.utsname new_resource.container if new_resource.container
   new_resource.utsname new_resource.name unless new_resource.utsname
 
@@ -67,14 +67,14 @@ end
 
 action :create do
   _lxc = @lxc
-  
+
   directory @lxc.path.to_path do
     action :create
   end
 
   file "lxc update_config[#{new_resource.utsname}]" do
     path _lxc.container_config.to_path
-    content ::Lxc::FileConfig.generate_config(new_resource)
+    content ::Lxc::FileConfig.generate_config(new_resource.to_hash)
     mode 0644
   end
 end
