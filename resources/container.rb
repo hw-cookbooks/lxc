@@ -13,6 +13,7 @@ attribute :chef_environment, :kind_of => String, :default => '_default'
 attribute :node_name, :kind_of => String
 attribute :run_list, :kind_of => Array
 attribute :chef_enabled, :kind_of => [TrueClass, FalseClass], :default => false
+attribute :chef_version, :kind_of => String
 attribute :chef_retries, :kind_of => Fixnum, :default => 0
 attribute :copy_data_bag_secret_file, :kind_of => [TrueClass, FalseClass], :default => false
 attribute :data_bag_secret_file, :kind_of => String, :default => Chef::Config[:encrypted_data_bag_secret]

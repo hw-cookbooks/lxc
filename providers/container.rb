@@ -246,7 +246,11 @@ action :create do
 
   ruby_block "lxc install_chef[#{new_resource.name}]" do
     block do
-      _lxc.container_command('bash /opt/chef-install.sh')
+      if(new_resource.chef_version)
+        _lxc.container_command("bash /opt/chef-install.sh -v #{new_resource.chef_version}")
+      else
+        _lxc.container_command('bash /opt/chef-install.sh')
+      end
     end
     action :create
     only_if do
