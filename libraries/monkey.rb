@@ -1,4 +1,4 @@
-unless(defined?(LxcMonkey))
+unless defined?(LxcMonkey)
   require 'chef/resource/execute'
   require 'chef/provider/execute'
 
@@ -12,16 +12,15 @@ unless(defined?(LxcMonkey))
           end
         end
       end
-      
+
       def monkey_shell_out!(com, opts)
-        if(str = @new_resource.stream_output)
-          opts[:live_stream] = str.kind_of?(IO) ? str : STDOUT
+        if (str = @new_resource.stream_output)
+          opts[:live_stream] = str.is_a?(IO) ? str : STDOUT
         end
         non_monkey_shell_out!(com, opts)
-      end      
+      end
     end
     module Resource
-
       class << self
         def included(klass)
           klass.class_eval do
@@ -30,22 +29,22 @@ unless(defined?(LxcMonkey))
           end
         end
       end
-      
+
       def monkey_initialize(*args)
         non_monkey_initialize(*args)
         @stream_output = nil
       end
 
-      def stream_output(arg=nil)
+      def stream_output(arg = nil)
         set_or_return(
           :stream_output,
           arg,
-          :kind_of => [TrueClass,FalseClass,IO]
+          kind_of: [TrueClass, FalseClass, IO]
         )
       end
     end
   end
 
-  Chef::Resource::Execute.send(:include, LxcMonkey::Resource)
-  Chef::Provider::Execute.send(:include, LxcMonkey::Provider)
+  Chef::Resource::Execute.include LxcMonkey::Resource
+  Chef::Provider::Execute.include LxcMonkey::Provider
 end
