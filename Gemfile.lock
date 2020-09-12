@@ -51,7 +51,7 @@ GEM
     erubis (2.7.0)
     ffi (1.9.0)
     highline (1.6.19)
-    i18n (0.6.5)
+    i18n (0.6.11)
     ipaddress (0.8.0)
     json (1.7.7)
     kitchen-vagrant (0.11.1)
