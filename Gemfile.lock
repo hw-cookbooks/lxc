@@ -49,7 +49,7 @@ GEM
       ffi (~> 1.0, >= 1.0.11)
     coderay (1.0.9)
     erubis (2.7.0)
-    ffi (1.9.0)
+    ffi (1.13.1)
     highline (1.6.19)
     i18n (0.6.5)
     ipaddress (0.8.0)
