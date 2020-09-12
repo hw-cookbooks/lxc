@@ -13,18 +13,18 @@ execute 'create lxcbr0' do
 end
 
 file '/etc/sysconfig/network-scripts/ifcfg-lxcbr0' do
-  content lazy{
+  content lazy {
     {
-      :device => 'lxcbr0',
-      :type => 'Bridge',
-      :bootproto => 'static',
-      :ipaddr => node[:lxc][:default_config][:lxc_addr],
-      :netmask => '255.255.255.0'
-    }.map do |k,v|
+      device: 'lxcbr0',
+      type: 'Bridge',
+      bootproto: 'static',
+      ipaddr: node['lxc']['default_config']['lxc_addr'],
+      netmask: '255.255.255.0',
+    }.map do |k, v|
       "#{k.to_s.upcase}=#{v.inspect}"
     end.join("\n")
   }
-  mode 0644
+  mode '644'
   notifies :run, 'execute[enable lxcbr0]', :immediately
 end
 
@@ -52,11 +52,11 @@ file '/etc/sysconfig/iptables' do
     ':PREROUTING ACCEPT [0:0]',
     ':OUTPUT ACCEPT [0:0]',
     ':POSTROUTING ACCEPT [0:0]',
-    "-A POSTROUTING -s #{node[:lxc][:default_config][:lxc_network]} ! -d #{node[:lxc][:default_config][:lxc_network]} -j MASQUERADE",
+    "-A POSTROUTING -s #{node['lxc']['default_config']['lxc_network']} ! -d #{node['lxc']['default_config']['lxc_network']} -j MASQUERADE",
     'COMMIT',
-    ''
+    '',
   ].join("\n")
-  mode 0644
+  mode '644'
   notifies :restart, 'service[iptables]', :immediately
 end
 
@@ -65,11 +65,11 @@ service 'iptables'
 ruby_block 'enable ipv4 forwarding' do
   block do
     lines = File.readlines('/etc/sysctl.conf').map(&:strip)
-    lines.delete_if{|l|l.empty?}
+    lines.delete_if { |l| l.empty? }
     line = lines.detect do |l|
       l.start_with?('net.ipv4.ip_forward')
     end
-    if(line)
+    if line
       line.replace('net.ipv4.ip_forward = 1')
     else
       lines << 'net.ipv4.ip_forward = 1'
@@ -92,22 +92,22 @@ end
 package 'dnsmasq'
 
 file '/etc/dnsmasq.conf' do
-  content lazy{
+  content lazy {
     {
-      'listen-address' => node[:lxc][:default_config][:lxc_addr],
+      'listen-address' => node['lxc']['default_config']['lxc_addr'],
       'interface' => 'lxcbr0',
       'except-interface' => 'lo',
       'bind-interfaces' => true,
-      'dhcp-range' => "#{node[:lxc][:default_config][:lxc_dhcp_range]}"
-    }.map do |k,v|
-      if(v == true)
+      'dhcp-range' => "#{node['lxc']['default_config']['lxc_dhcp_range']}",
+    }.map do |k, v|
+      if v == true
         k
       else
         "#{k}=#{v}"
       end
     end.join("\n")
   }
-  mode 0644
+  mode '644'
   notifies :restart, 'service[dnsmasq]', :immediately
 end
 
@@ -120,7 +120,7 @@ file '/etc/lxc/default.conf' do
     'lxc.network.type = veth',
     'lxc.network.link = lxcbr0',
     'lxc.network.flags = up',
-    ''
+    '',
   ].join("\n")
-  mode 0644
+  mode '644'
 end
