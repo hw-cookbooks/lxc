@@ -1,15 +1,15 @@
 def load_current_resource
   @lxc = ::Lxc.new(
     new_resource.name,
-    :base_dir => node[:lxc][:container_directory],
-    :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
+    base_dir: node['lxc']['container_directory'],
+    dnsmasq_lease_file: node['lxc']['dnsmasq_lease_file']
   )
 
-  if(node[:lxc][:bugfix][:precise][:repo][:enabled] &&
-      node[:lxc][:bugfix][:precise][:repo][:auto_enable_lwrp] &&
-      new_resource.template == 'ubuntu' && new_resource.template_opts.fetch('--release', 'precise') == 'precise')
+  if node['lxc']['bugfix']['precise']['repo']['enabled'] &&
+     node['lxc']['bugfix']['precise']['repo']['auto_enable_lwrp'] &&
+     new_resource.template == 'ubuntu' && new_resource.template_opts.fetch('--release', 'precise') == 'precise'
     new_resource.environment.merge(
-      'LOCAL_REPO' => "file://#{File.join(node[:lxc][:bugfix][:precise][:repo][:path], 'precise')}"
+      'LOCAL_REPO' => "file://#{File.join(node['lxc']['bugfix']['precise']['repo']['path'], 'precise')}"
     )
   end
 end
@@ -26,20 +26,19 @@ action :create do
 end
 
 action :clone do
-
   require 'elecksee/clone'
 
   _lxc = @lxc
 
-  unless(::Lxc.new(new_resource.base_container).exists?)
+  unless ::Lxc.new(new_resource.base_container).exists?
     raise "LXC clone failed! Base container #{new_resource.base_container} does not exist. Cannot create #{new_resource.name}"
   end
 
   ruby_block "LXC Clone: #{new_resource.base_container} -> #{new_resource.name}" do
     block do
       cloner = ::Lxc::Clone.new(
-        :original => new_resource.base_container,
-        :new_name => new_resource.name
+        original: new_resource.base_container,
+        new_name: new_resource.name
       )
       cloner.clone!
     end

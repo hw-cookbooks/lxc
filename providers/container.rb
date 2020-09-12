@@ -1,8 +1,8 @@
 def load_current_resource
   @lxc = ::Lxc.new(
     new_resource.name,
-    :base_dir => node[:lxc][:container_directory],
-    :dnsmasq_lease_file => node[:lxc][:dnsmasq_lease_file]
+    base_dir: node['lxc']['container_directory'],
+    dnsmasq_lease_file: node['lxc']['dnsmasq_lease_file']
   )
   new_resource.subresources.map! do |s_r|
     s_r.first.run_context = run_context
@@ -11,15 +11,15 @@ def load_current_resource
   end
 
   # TODO: Use some actual logic here, sheesh
-  if(new_resource.static_ip && new_resource.static_gateway.nil?)
+  if new_resource.static_ip && new_resource.static_gateway.nil?
     raise "Static gateway must be defined when static IP is provided (Container: #{new_resource.name})"
   end
-  new_resource.default_bridge node[:lxc][:bridge] unless new_resource.default_bridge
+  new_resource.default_bridge node['lxc']['bridge'] unless new_resource.default_bridge
   node.run_state[:lxc] ||= Mash.new
   node.run_state[:lxc][:meta] ||= Mash.new
   node.run_state[:lxc][:meta][new_resource.name] = Mash.new(
-    :new_container => !@lxc.exists?,
-    :lxc => @lxc
+    new_container: !@lxc.exists?,
+    lxc: @lxc
   )
 end
 
@@ -39,7 +39,7 @@ action :create do
 
   #### Create container
   lxc new_resource.name do
-    if(new_resource.clone)
+    if new_resource.clone
       action :clone
       base_container new_resource.clone
     else
@@ -50,14 +50,14 @@ action :create do
   end
 
   #### Create container configuration bits
-  if(new_resource.default_config)
+  if new_resource.default_config
     lxc_config new_resource.name do
       action :create
       default_bridge new_resource.default_bridge
     end
   end
 
-  if(new_resource.default_fstab)
+  if new_resource.default_fstab
     lxc_fstab "proc[#{new_resource.name}]" do
       container new_resource.name
       file_system 'proc'
@@ -75,7 +75,7 @@ action :create do
     end
   end
 
-  if(new_resource.static_ip)
+  if new_resource.static_ip
     lxc_interface "eth0[#{new_resource.name}]" do
       container new_resource.name
       device 'eth0'
@@ -99,19 +99,19 @@ action :create do
   template @lxc.path.join('fstab').to_path do
     source 'fstab.erb'
     cookbook 'lxc'
-    variables :container => new_resource.name
+    variables container: new_resource.name
     only_if do
       node.run_state[:lxc][:fstabs] &&
         node.run_state[:lxc][:fstabs][new_resource.name]
     end
-    mode 0644
+    mode '644'
   end
 
   template @lxc.rootfs.join('etc/network/interfaces').to_path do
     source 'interface.erb'
     cookbook 'lxc'
-    variables :container => new_resource.name
-    mode 0644
+    variables container: new_resource.name
+    mode '644'
     only_if do
       node.run_state[:lxc][:interfaces] &&
         node.run_state[:lxc][:interfaces][new_resource.name]
@@ -124,21 +124,21 @@ action :create do
   template @lxc.rootfs.join('root/.ssh/authorized_keys').to_path do
     source 'file_content.erb'
     cookbook 'lxc'
-    mode 0600
-    variables(:path => '/opt/hw-lxc-config/id_rsa.pub')
+    mode '600'
+    variables(path: '/opt/hw-lxc-config/id_rsa.pub')
   end
 
   #### Use cached chef package from host if available
-  VERSION_REGEXP = %r{(\d+\.\d+\.\d+(-\d+)?)}
-  if(%w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>&1 > /dev/null'))
-    file_path = Dir.glob(::File.join('/opt', 'chef*.deb')).sort do |x,y|
+  VERSION_REGEXP = /(\d+\.\d+\.\d+(-\d+)?)/.freeze
+  if %w(debian ubuntu).include?(new_resource.template) && system('ls /opt/chef*.deb 2>&1 > /dev/null')
+    file_path = Dir.glob(::File.join('/opt', 'chef*.deb')).sort do |x, y|
       version_x = x.scan(VERSION_REGEXP).flatten.first
       version_y = y.scan(VERSION_REGEXP).flatten.first
-      if(version_x.nil? && version_y.nil?)
+      if version_x.nil? && version_y.nil?
         0
-      elsif(version_x.nil?)
+      elsif version_x.nil?
         -1
-      elsif(version_y.nil?)
+      elsif version_y.nil?
         1
       else
         Gem::Version.new(version_x) <=> Gem::Version.new(version_y)
@@ -157,14 +157,14 @@ action :create do
       command "chroot #{_lxc.rootfs} dpkg -i #{file_path}"
       subscribes :run, "execute[lxc copy_chef_full[#{new_resource.name}]]", :immediately
     end
-  elsif(new_resource.chef_enabled)
-    pkg_coms = ['update -y -q', 'upgrade -y -q','install curl -y -q']
-    if(!new_resource.template.to_s.scan(%r{debian|ubuntu}).empty?)
+  elsif new_resource.chef_enabled
+    pkg_coms = ['update -y -q', 'upgrade -y -q', 'install curl -y -q']
+    if !new_resource.template.to_s.scan(/debian|ubuntu/).empty?
       pkg_man = 'apt-get'
-    elsif(!new_resource.template.to_s.scan(%r{fedora|centos}).empty?)
+    elsif !new_resource.template.to_s.scan(/fedora|centos/).empty?
       pkg_man = 'yum'
     end
-    if(pkg_man)
+    if pkg_man
       new_resource.initialize_commands(
         pkg_coms.map do |c|
           "#{pkg_man} #{c}"
@@ -173,13 +173,13 @@ action :create do
     end
   end
 
-  ruby_block "lxc lock_default_users" do
+  ruby_block 'lxc lock_default_users' do
     block do
       contents = ::File.readlines(_lxc.rootfs.join('etc/shadow').to_path)
       ::File.open(_lxc.rootfs.join('etc/shadow').to_path, 'w') do |file|
         contents.each do |line|
           parts = line.split(':')
-          if(node[:lxc][:user_locks].include?(parts.first) && !parts[1].start_with?('!'))
+          if node['lxc']['user_locks'].include?(parts.first) && !parts[1].start_with?('!')
             parts[1] = "!#{parts[1]}"
           end
           file.write parts.join(':')
@@ -189,24 +189,24 @@ action :create do
     only_if do
       ::File.readlines(_lxc.rootfs.join('etc/shadow').to_path).detect do |line|
         parts = line.split(':')
-        node[:lxc][:user_locks].include?(parts.first) && !parts[1].start_with?('!')
+        node['lxc']['user_locks'].include?(parts.first) && !parts[1].start_with?('!')
       end
     end
   end
 
-  ruby_block "lxc default_password_scrub" do
+  ruby_block 'lxc default_password_scrub' do
     block do
       contents = ::File.readlines(_lxc.rootfs.join('etc/shadow').to_path)
       ::File.open(_lxc.rootfs.join('etc/shadow'), 'w') do |file|
         contents.each do |line|
-          if(line.start_with?('root:'))
+          if line.start_with?('root:')
             line.replace("root:!:::::::\n")
           end
           file.write line
         end
       end
     end
-#    not_if "grep 'root:\*' #{_lxc.rootfs.join('etc/shadow').to_path}"
+    #    not_if "grep 'root:\*' #{_lxc.rootfs.join('etc/shadow').to_path}"
   end
 
   ruby_block "lxc start[#{new_resource.name}]" do
@@ -236,7 +236,7 @@ action :create do
 
   # Make sure we have chef in the container
   remote_file "lxc chef_install_script[#{new_resource.name}]" do
-    source "http://opscode.com/chef/install.sh"
+    source 'http://opscode.com/chef/install.sh'
     path _lxc.rootfs.join('opt/chef-install.sh').to_path
     action :create_if_missing
     only_if do
@@ -248,7 +248,7 @@ action :create do
     block do
       _lxc.container_command('bash /opt/chef-install.sh')
     end
-    action :create
+    action :run
     only_if do
       new_resource.chef_enabled &&
         !_lxc.rootfs.join('usr/bin/chef-client').exist? &&
@@ -259,8 +259,8 @@ action :create do
   #### Setup chef related bits within container
   directory @lxc.rootfs.join('etc/chef').to_path do
     action :create
-    mode 0755
-    only_if{ new_resource.chef_enabled }
+    mode '755'
+    only_if { new_resource.chef_enabled }
   end
 
   template "lxc chef-config[#{new_resource.name}]" do
@@ -268,41 +268,41 @@ action :create do
     cookbook 'lxc'
     path _lxc.rootfs.join('etc/chef/client.rb').to_path
     variables(
-      :validation_client => new_resource.validation_client || Chef::Config[:validation_client_name],
-      :node_name => new_resource.node_name || "#{node.name}-#{new_resource.name}",
-      :server_uri => new_resource.server_uri || Chef::Config[:chef_server_url],
-      :chef_environment => new_resource.chef_environment || '_default'
+      validation_client: new_resource.validation_client || Chef::Config[:validation_client_name],
+      node_name: new_resource.node_name || "#{node.name}-#{new_resource.name}",
+      server_uri: new_resource.server_uri || Chef::Config[:chef_server_url],
+      chef_environment: new_resource.chef_environment || '_default'
     )
-    mode 0644
-    only_if{ new_resource.chef_enabled }
+    mode '644'
+    only_if { new_resource.chef_enabled }
   end
 
   file "lxc chef-validator[#{new_resource.name}]" do
     path _lxc.rootfs.join('etc/chef/validator.pem').to_path
-    content new_resource.validator_pem || node[:lxc][:validator_pem] || node.run_state[:lxc_default_validator]
-    mode 0600
-    only_if{ new_resource.chef_enabled && !_lxc.rootfs.join('etc/chef/client.pem').exist? }
+    content new_resource.validator_pem || node['lxc']['validator_pem'] || node.run_state[:lxc_default_validator]
+    mode '600'
+    only_if { new_resource.chef_enabled && !_lxc.rootfs.join('etc/chef/client.pem').exist? }
   end
 
   file "lxc chef-runlist[#{new_resource.name}]" do
     path _lxc.rootfs.join('etc/chef/first_run.json').to_path
-    content({:run_list => new_resource.run_list}.to_json)
+    content({ run_list: new_resource.run_list }.to_json)
     only_if do
       new_resource.chef_enabled && !_lxc.rootfs.join('etc/chef/client.pem').exist?
     end
-    mode 0644
+    mode '644'
   end
 
   file "lxc chef-data-bag-secret[#{new_resource.name}]" do
     path _lxc.rootfs.join('etc/chef/encrypted_data_bag_secret').to_path
     content(
-      ::File.exists?(new_resource.data_bag_secret_file.to_s) ? ::File.open(new_resource.data_bag_secret_file, "rb").read : ''
+      ::File.exist?(new_resource.data_bag_secret_file.to_s) ? ::File.open(new_resource.data_bag_secret_file, 'rb').read : ''
     )
-    mode 0600
+    mode '600'
     only_if do
       new_resource.chef_enabled &&
-      new_resource.copy_data_bag_secret_file &&
-        ::File.exists?(new_resource.data_bag_secret_file)
+        new_resource.copy_data_bag_secret_file &&
+        ::File.exist?(new_resource.data_bag_secret_file)
     end
   end
 
@@ -353,7 +353,6 @@ action :create do
   file @lxc.rootfs.join('etc/chef/validator.pem').to_path do
     action :delete
   end
-
 end
 
 action :delete do
