@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 include_recipe 'lxc::bugfix_precise_repo'
 
 dpkg_autostart 'lxc' do
