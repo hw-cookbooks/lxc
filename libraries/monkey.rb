@@ -20,6 +20,7 @@ unless defined?(LxcMonkey)
         non_monkey_shell_out!(com, opts)
       end
     end
+
     module Resource
       class << self
         def included(klass)
