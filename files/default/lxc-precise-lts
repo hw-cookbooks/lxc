@@ -4,12 +4,12 @@
 
 require 'fileutils'
 
-LXC_TEMPLATE='/usr/lib/lxc/templates/lxc-ubuntu'
+LXC_TEMPLATE = '/usr/lib/lxc/templates/lxc-ubuntu'
 
 def report(action)
   print "#{action}... "
   yield
-  puts "done"
+  puts 'done'
 end
 
 # Set paths
@@ -28,14 +28,14 @@ end
 
 # define required packages
 report 'Fetching required package list' do
-  packages = %x{debootstrap --print-debs --include="vim,ssh" precise /tmp/precise-bootstrap}.strip
+  packages = `debootstrap --print-debs --include="vim,ssh" precise /tmp/precise-bootstrap`.strip
 end
 
 # download packages
 report 'Downloading packages' do
   Dir.chdir(pool)
-  unless(system("apt-get download #{packages}"))
-    $stderr.puts 'Package download failed!'
+  unless system("apt-get download #{packages}")
+    warn 'Package download failed!'
     exit 1
   end
 end
@@ -65,8 +65,8 @@ end
 # generate
 report 'Generating archive' do
   Dir.chdir(repo_root)
-  unless(system("apt-ftparchive generate #{File.basename(conf)}"))
-    $stderr.puts 'Archive generation failed!'
+  unless system("apt-ftparchive generate #{File.basename(conf)}")
+    warn 'Archive generation failed!'
     exit 1
   end
 end
@@ -74,18 +74,18 @@ end
 report 'Adding release files' do
   [precise_root, component].each do |d|
     Dir.chdir(d)
-    con = %x{apt-ftparchive release .}
+    con = `apt-ftparchive release .`
     File.open(File.join(d, 'Release'), 'w') do |file|
       file.puts "Components main\n#{con}\n"
     end
   end
 end
 
-if(File.exists?(LXC_TEMPLATE))
+if File.exist?(LXC_TEMPLATE)
   report 'Updating ubuntu lxc template' do
     contents = File.readlines(LXC_TEMPLATE)
     contents.map! do |line|
-      if(line =~ /^\s*debootstrap.+\$MIRROR\s*$/)
+      if line =~ /^\s*debootstrap.+\$MIRROR\s*$/
         'debootstrap --no-check-gpg --verbose --components=main --arch=$arch --include=$packages $release $cache/partial-$arch $LOCAL_REPO'
       else
         line
@@ -99,6 +99,6 @@ end
 
 puts "\nSUCCESS: Local updated precise repository created for debootstrap"
 puts "  USAGE: debootstrap precise store_dir file://#{precise_root}"
-if(File.exists?(LXC_TEMPLATE))
+if File.exist?(LXC_TEMPLATE)
   puts "LXC USAGE: LOCAL_REPO=\"file://#{precise_root}\" lxc-create -n ctn-name -t ubuntu"
 end

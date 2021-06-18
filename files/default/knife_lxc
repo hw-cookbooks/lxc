@@ -35,7 +35,7 @@ def conf
 end
 
 def lxc_exists?(lxc_name)
-  current_names = Dir.glob(File.join(LXC_HOME, '*')).map{|c| File.basename(c)}
+  current_names = Dir.glob(File.join(LXC_HOME, '*')).map { |c| File.basename(c) }
   current_names.include?(lxc_name)
 end
 
@@ -46,24 +46,24 @@ end
 def available_ips
   # TODO: Add range calculation
   range = conf['address']['range']
-  if(range.to_s.empty?)
-    range = (range.split('-').first.split('.').last..range.split('-').last).map{|oct|
-      "#{range.split('-').first.split('.').slice(0,3).join('.')}.#{oct}"
-    }
-  else
-    range = []
-  end
+  range = if range.to_s.empty?
+            (range.split('-').first.split('.').last..range.split('-').last).map do |oct|
+              "#{range.split('-').first.split('.').slice(0, 3).join('.')}.#{oct}"
+            end
+          else
+            []
+          end
   (conf['addresses']['static'] + range).compact
 end
 
 def used_ips
-  Dir.glob(File.join(LXC_HOME, '*')).map{ |ctn|
-    File.readlines(File.join(ctn, 'rootfs', 'etc', 'network', 'interfaces')).detect{ |line|
+  Dir.glob(File.join(LXC_HOME, '*')).map do |ctn|
+    File.readlines(File.join(ctn, 'rootfs', 'etc', 'network', 'interfaces')).detect do |line|
       line.include?('address')
-    }.to_s.split(' ').last.to_s.strip
-  }.reject{ |addr|
+    end.to_s.split(' ').last.to_s.strip
+  end.reject do |addr|
     addr.empty?
-  }
+  end
 end
 
 def update_container_ip(name)
@@ -78,9 +78,9 @@ def update_network_interfaces(name, address)
   (parts = address.split('.')).last.replace('1')
   default_gw = parts.join('.')
   File.open(File.join(LXC_HOME, name, 'rootfs', 'etc', 'network', 'interfaces'), 'w') do |file|
-    file.puts "auto lo eth0"
-    file.puts "iface lo inet loopback"
-    file.puts "iface eth0 inet static"
+    file.puts 'auto lo eth0'
+    file.puts 'iface lo inet loopback'
+    file.puts 'iface eth0 inet static'
     file.puts "  address #{address}"
     file.puts "  gateway #{conf['gateway'] || default_gw}"
     file.puts "  netmask #{conf['netmask'] || default_nm}"
@@ -90,7 +90,7 @@ end
 def sudoable_ubuntu(name)
   path = File.join(LXC_HOME, name, 'rootfs', 'etc', 'sudoers')
   content = File.readlines(path).map do |line|
-    if(line.start_with?('%sudo'))
+    if line.start_with?('%sudo')
       '%sudo ALL=(ALL) NOPASSWD:ALL'
     else
       line
@@ -102,7 +102,7 @@ def sudoable_ubuntu(name)
 end
 
 def clone_container(name, template)
-  Lxc::Clone(:original => "#{template}_base", :new_name => name).clone!
+  Lxc::Clone(original: "#{template}_base", new_name: name).clone!
 end
 
 def start_container(name)
@@ -118,7 +118,7 @@ def create_lxc(lxc_name, template)
   clone_container(lxc_name, template)
   address = update_container_ip(lxc_name)
   # TODO: Update debian and fedora to use sudo user and remove root login
-  if(lxc_name == 'ubuntu')
+  if lxc_name == 'ubuntu'
     sudoable_ubuntu(lxc_name)
   end
   start_container(lxc_name)
@@ -131,11 +131,11 @@ end
 
 def lxc_type(name)
   base = File.join(LXC_HOME, name, 'rootfs', 'etc')
-  if(File.exists?(lsb = File.join(base, 'lsb-release')))
+  if File.exist?(lsb = File.join(base, 'lsb-release'))
     File.readlines(lsb).last.split('=').last.strip.gsub('"', '')
-  elsif(File.exists?(sys_rel = File.join(base, 'system-release')))
+  elsif File.exist?(sys_rel = File.join(base, 'system-release'))
     File.readlines(sys_rel).first.strip
-  elsif(File.exists?(deb_ver = File.join(base, 'debian_version')))
+  elsif File.exist?(deb_ver = File.join(base, 'debian_version'))
     "Debain #{File.read(deb_ver).strip}"
   else
     'UNKNOWN'
@@ -144,12 +144,12 @@ end
 
 def list_lxcs
   info = Hash[
-    *Dir.glob(File.join(LXC_HOME, '*')).map{|dir|
+    *Dir.glob(File.join(LXC_HOME, '*')).map do |dir|
       key = File.basename(dir)
-      [key, {:address => lxc_address(key), :type => lxc_type(key)}]
-    }.sort{|a,b|
+      [key, { address: lxc_address(key), type: lxc_type(key) }]
+    end.sort  do |a, b|
       a.first <=> b.first
-    }.flatten
+    end.flatten
   ]
   info.each do |name, info|
     puts "#{name}"
@@ -166,7 +166,7 @@ end
 
 def delete_lxc(lxc_name)
   Lxc.new(lxc_name).stop
-  %x{lxc-destroy -n #{lxc_name}}
+  `lxc-destroy -n #{lxc_name}`
 end
 
 action = ARGV.first.to_s
@@ -179,44 +179,43 @@ when 'list'
   list_lxcs
 when 'info'
   lxc_name = ARGV[1]
-  if(lxc_exists?(lxc_name))
+  if lxc_exists?(lxc_name)
     info_lxc(lxc_name)
   else
-    $stderr.puts "Requested container does not exist: #{lxc_name}"
+    warn "Requested container does not exist: #{lxc_name}"
     exit 2
   end
 when 'start'
   lxc_name = ARGV[1]
-  if(lxc_exists?(lxc_name))
+  if lxc_exists?(lxc_name)
     print "Starting container #{lxc_name}... "
     start_lxc(lxc_name)
     puts 'started'
   else
-    $stderr.puts "Requested container does not exist: #{lxc_name}"
+    warn "Requested container does not exist: #{lxc_name}"
     exit 2
   end
 when 'stop'
   lxc_name = ARGV[1]
-  if(lxc_exists?(lxc_name))
+  if lxc_exists?(lxc_name)
     print "Stopping container #{lxc_name}... "
     stop_lxc(lxc_name)
     puts 'stopped'
   else
-    $stderr.puts "Requested container does not exist: #{lxc_name}"
+    warn "Requested container does not exist: #{lxc_name}"
     exit 2
   end
 when 'delete'
   lxc_name = ARGV[1]
-  if(lxc_exists?(lxc_name))
+  if lxc_exists?(lxc_name)
     print "Deleting LXC #{lxc_name}... "
     destroy_lxc(lxc_name)
     puts 'done'
   else
-    $stderr.puts "Requested container does not exist: #{lxc_name}"
+    warn "Requested container does not exist: #{lxc_name}"
     exit 2
   end
 else
-  $stderr.puts "ERROR: Unknown action: #{action}"
+  warn "ERROR: Unknown action: #{action}"
   exit 1
 end
-
